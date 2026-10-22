@@ -472,7 +472,7 @@
           Agar data di HP kasir, laptop, dan tablet otomatis sinkron secara <b>Real-time</b> seketika:
         </p>
         <div class="space-y-1.5">
-          <input type="text" id="firebaseDbUrlInput" placeholder="Contoh: " class="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white font-mono">
+          <input type="text" id="firebaseDbUrlInput" placeholder="Contoh: https://tutu-bakery-default-rtdb.asia-southeast1.firebasedatabase.app" class="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white font-mono">
           <div class="flex items-center gap-1.5 text-[10px]">
             <span class="text-slate-500 font-semibold">Pilih Server:</span>
             <button type="button" onclick="setPresetUrl('asia')" class="px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold">🇸🇬 Singapore</button>
@@ -688,7 +688,7 @@
         if (match && match[1]) {
           url = 'https://' + match[1] + '.asia-southeast1.firebasedatabase.app';
         } else {
-          url = '';
+          url = 'https://tutu-bakery-default-rtdb.asia-southeast1.firebasedatabase.app';
         }
       }
       return url;
@@ -778,8 +778,9 @@
           console.warn('Firebase error for ' + rawInput + ':', err);
           // If asia-southeast1 failed and haven't tried us fallback yet
           if (!isRetry && rawInput.includes('asia-southeast1.firebasedatabase.app')) {
-            console.log('Firebase Asia failed, skipping US fallback');
-            updateFirebaseUI(false);
+            const usUrl = 'https://tutu-bakery-default-rtdb.firebaseio.com';
+            console.log('Mencoba fallback ke US server:', usUrl);
+            initFirebaseSync(usUrl, true);
             return;
           }
           showToast('Izin Firebase ditolak atau server tidak cocok. Pastikan Rules Realtime Database bernilai true.', false);
@@ -790,7 +791,7 @@
       } catch (e) {
         console.error('Firebase setup failed:', e);
         if (!isRetry && rawInput.includes('asia-southeast1.firebasedatabase.app')) {
-          updateFirebaseUI(false);
+          initFirebaseSync('https://tutu-bakery-default-rtdb.firebaseio.com', true);
           return;
         }
         showToast('Gagal terhubung ke Firebase: ' + e.message, false);
@@ -799,12 +800,10 @@
 
     function setPresetUrl(type) {
       const input = document.getElementById('firebaseDbUrlInput');
-      const saved = localStorage.getItem('tutu_firebase_url') || '';
-      const dbName = saved.match(///([^.]+)./)?.[1] || 'YOUR-DB-NAME';
       if (type === 'asia') {
-        input.value = 'https://' + dbName + '.asia-southeast1.firebasedatabase.app';
+        input.value = 'https://tutu-bakery-default-rtdb.asia-southeast1.firebasedatabase.app';
       } else {
-        input.value = 'https://' + dbName + '.firebaseio.com';
+        input.value = 'https://tutu-bakery-default-rtdb.firebaseio.com';
       }
       saveFirebaseConfig();
     }
@@ -856,8 +855,9 @@
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      // 2. Load Firebase URL from localStorage only (not hardcoded)
-      const savedFb = localStorage.getItem('tutu_firebase_url') || '';
+      // 2. Default to tutu-bakery Firebase Cloud Database
+      const DEFAULT_FB_URL = 'https://tutu-bakery-default-rtdb.asia-southeast1.firebasedatabase.app';
+      const savedFb = localStorage.getItem('tutu_firebase_url') || DEFAULT_FB_URL;
       if (savedFb) {
         initFirebaseSync(savedFb);
       } else {
