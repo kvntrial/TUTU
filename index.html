@@ -475,7 +475,12 @@
           Agar data di HP kasir, laptop, dan tablet otomatis sinkron secara <b>Real-time</b> seketika:
         </p>
         <div class="space-y-1.5">
-          <input type="text" id="firebaseDbUrlInput" placeholder="Contoh: https://proyek-default-rtdb.firebaseio.com" class="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white font-mono">
+          <input type="text" id="firebaseDbUrlInput" placeholder="Contoh: https://tutu-bakery-default-rtdb.asia-southeast1.firebasedatabase.app" class="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white font-mono">
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <span class="text-slate-500 font-semibold">Pilih Server:</span>
+            <button type="button" onclick="setPresetUrl('asia')" class="px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold">🇸🇬 Singapore</button>
+            <button type="button" onclick="setPresetUrl('us')" class="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold">🇺🇸 US (Default)</button>
+          </div>
           <div class="flex gap-1.5">
             <button type="button" onclick="saveFirebaseConfig()" class="flex-1 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-sm transition">
               <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Sambungkan
@@ -692,37 +697,58 @@
       return url;
     }
 
-    function initFirebaseSync(dbUrl) {
+    function initFirebaseSync(dbUrl, isRetry = false) {
       if (!dbUrl || !dbUrl.trim()) return;
       const cleanUrl = normalizeFirebaseUrl(dbUrl);
       try {
-        let config = {};
+        let config = {
+          apiKey: "AIzaSyDummyTutuBakeryPublicAppKey12345678",
+          authDomain: "tutu-bakery.firebaseapp.com",
+          projectId: "tutu-bakery",
+          databaseURL: cleanUrl
+        };
+
         if (cleanUrl.startsWith('{')) {
-          config = JSON.parse(cleanUrl);
-        } else {
-          config = { databaseURL: cleanUrl };
+          try {
+            config = Object.assign(config, JSON.parse(cleanUrl));
+          } catch(e) {}
         }
 
-        if (firebase.apps && firebase.apps.length > 0) {
+        if (window.firebase && firebase.apps && firebase.apps.length > 0) {
           firebase.app().delete().then(() => {
-            setupFirebaseInstance(config, cleanUrl);
+            setupFirebaseInstance(config, cleanUrl, isRetry);
           }).catch(() => {
-            setupFirebaseInstance(config, cleanUrl);
+            setupFirebaseInstance(config, cleanUrl, isRetry);
           });
         } else {
-          setupFirebaseInstance(config, cleanUrl);
+          setupFirebaseInstance(config, cleanUrl, isRetry);
         }
       } catch (err) {
         console.error('Firebase config error:', err);
-        showToast('URL Firebase tidak valid', false);
+        showToast('Gagal inisialisasi Firebase: ' + err.message, false);
       }
     }
 
-    function setupFirebaseInstance(config, rawInput) {
+    function setupFirebaseInstance(config, rawInput, isRetry = false) {
       try {
+        if (!window.firebase) {
+          console.warn('Firebase SDK belum siap');
+          return;
+        }
+
         firebase.initializeApp(config);
         fbDatabase = firebase.database();
         fbRef = fbDatabase.ref('tutu_bakery_records');
+
+        // Check connection state via .info/connected
+        const connectedRef = fbDatabase.ref('.info/connected');
+        connectedRef.on('value', (snap) => {
+          if (snap.val() === true) {
+            isFirebaseSyncActive = true;
+            updateSyncStatus('firebase');
+            updateFirebaseUI(true, rawInput);
+          }
+        });
 
         // Realtime Listener: triggers instantly on any change across all devices
         fbRef.on('value', (snapshot) => {
@@ -752,19 +778,37 @@
             updateFirebaseUI(true, rawInput);
           }
         }, (err) => {
-          console.warn('Firebase sync permission error:', err);
-          showToast('Izin Firebase ditolak. Pastikan rules Realtime Database bernilai true.', false);
+          console.warn('Firebase error for ' + rawInput + ':', err);
+          // If asia-southeast1 failed and haven't tried us fallback yet
+          if (!isRetry && rawInput.includes('asia-southeast1.firebasedatabase.app')) {
+            const usUrl = 'https://tutu-bakery-default-rtdb.firebaseio.com';
+            console.log('Mencoba fallback ke US server:', usUrl);
+            initFirebaseSync(usUrl, true);
+            return;
+          }
+          showToast('Izin Firebase ditolak atau server tidak cocok. Pastikan Rules Realtime Database bernilai true.', false);
           updateFirebaseUI(false);
         });
 
         localStorage.setItem('tutu_firebase_url', rawInput);
-        isFirebaseSyncActive = true;
-        updateSyncStatus('firebase');
-        updateFirebaseUI(true, rawInput);
       } catch (e) {
         console.error('Firebase setup failed:', e);
-        showToast('Gagal terhubung ke Firebase', false);
+        if (!isRetry && rawInput.includes('asia-southeast1.firebasedatabase.app')) {
+          initFirebaseSync('https://tutu-bakery-default-rtdb.firebaseio.com', true);
+          return;
+        }
+        showToast('Gagal terhubung ke Firebase: ' + e.message, false);
       }
+    }
+
+    function setPresetUrl(type) {
+      const input = document.getElementById('firebaseDbUrlInput');
+      if (type === 'asia') {
+        input.value = 'https://tutu-bakery-default-rtdb.asia-southeast1.firebasedatabase.app';
+      } else {
+        input.value = 'https://tutu-bakery-default-rtdb.firebaseio.com';
+      }
+      saveFirebaseConfig();
     }
 
     function saveFirebaseConfig() {

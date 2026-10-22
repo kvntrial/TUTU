@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tutu-bakery-v1';
+const CACHE_NAME = 'tutu-bakery-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
@@ -15,7 +16,6 @@ self.addEventListener('install', (event) => {
       });
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -34,24 +34,39 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Pass API requests to network first, cache fallback
-  if (event.request.url.includes('api.php')) {
+  const request = event.request;
+
+  // 1. HTML Navigation: Always Network-First so users get latest updates immediately
+  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('./index.html')))
     );
     return;
   }
 
+  // 2. Ignore non-GET or chrome-extensions
+  if (request.method !== 'GET' || request.url.startsWith('chrome-extension')) {
+    return;
+  }
+
+  // 3. Static Assets: Cache-First with Network fallback
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          if (event.request.method === 'GET' && !event.request.url.startsWith('chrome-extension')) {
-            cache.put(event.request, response.clone());
-          }
-          return response;
-        });
+    caches.match(request).then((cached) => {
+      return cached || fetch(request).then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
       });
-    }).catch(() => caches.match('./index.html'))
+    })
   );
 });
