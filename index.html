@@ -677,9 +677,24 @@
       }
     }
 
+    function normalizeFirebaseUrl(input) {
+      if (!input) return '';
+      let url = input.trim();
+      // Handle if user pasted console URL: https://console.firebase.google.com/project/.../database/...
+      if (url.includes('console.firebase.google.com')) {
+        const match = url.match(/database\/([^\/]+)/);
+        if (match && match[1]) {
+          url = 'https://' + match[1] + '.asia-southeast1.firebasedatabase.app';
+        } else {
+          url = 'https://tutu-bakery-default-rtdb.asia-southeast1.firebasedatabase.app';
+        }
+      }
+      return url;
+    }
+
     function initFirebaseSync(dbUrl) {
       if (!dbUrl || !dbUrl.trim()) return;
-      const cleanUrl = dbUrl.trim();
+      const cleanUrl = normalizeFirebaseUrl(dbUrl);
       try {
         let config = {};
         if (cleanUrl.startsWith('{')) {
@@ -690,6 +705,8 @@
 
         if (firebase.apps && firebase.apps.length > 0) {
           firebase.app().delete().then(() => {
+            setupFirebaseInstance(config, cleanUrl);
+          }).catch(() => {
             setupFirebaseInstance(config, cleanUrl);
           });
         } else {
@@ -797,8 +814,9 @@
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      // 2. Check for saved Firebase Cloud Config
-      const savedFb = localStorage.getItem('tutu_firebase_url');
+      // 2. Default to tutu-bakery Firebase Cloud Database
+      const DEFAULT_FB_URL = 'https://tutu-bakery-default-rtdb.asia-southeast1.firebasedatabase.app';
+      const savedFb = localStorage.getItem('tutu_firebase_url') || DEFAULT_FB_URL;
       if (savedFb) {
         initFirebaseSync(savedFb);
       } else {
