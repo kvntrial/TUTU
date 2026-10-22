@@ -1,0 +1,42 @@
+{
+    "outlets": [
+        "DROPSHOT",
+        "SUASIKO",
+        "BENJAMIN"
+    ],
+    "transactions": [
+        {
+            "id": "tx_1",
+            "outlet": "DROPSHOT",
+            "date": "2026-10-15",
+            "dateDisplay": "15 oct 2026",
+            "cookies": 156000,
+            "cheesecake": 120000,
+            "total": 276000,
+            "pay": "Cash",
+            "notes": ""
+        },
+        {
+            "id": "tx_2",
+            "outlet": "SUASIKO",
+            "date": "2026-10-19",
+            "dateDisplay": "19 oct 2026",
+            "cookies": 264000,
+            "cheesecake": 0,
+            "total": 264000,
+            "pay": "Transfer",
+            "notes": "Laku 22"
+        },
+        {
+            "id": "tx_3",
+            "outlet": "BENJAMIN",
+            "date": "2026-10-20",
+            "dateDisplay": "20 oct 2026",
+            "cookies": 216000,
+            "cheesecake": 0,
+            "total": 216000,
+            "pay": "Cash",
+            "notes": ""
+        }
+    ]
+}

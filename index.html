@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TUTU Rekap Penjualan Bakery</title>
+  
+  <!-- PWA & Mobile Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TUTU Rekap">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- SheetJS for Excel (.xlsx) Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          screens: {
+            'xs': '400px'
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar for side-by-side ledger */
+    .ledger-scroll::-webkit-scrollbar {
+      height: 8px;
+    }
+    .ledger-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .ledger-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .ledger-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+        font-size: 11px !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .table-sheet {
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+      }
+      .table-sheet th, .table-sheet td {
+        border: 1px solid #000 !important;
+        padding: 4px 6px !important;
+      }
+      @page {
+        size: landscape;
+        margin: 1cm;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white pb-24 md:pb-10">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
+        <!-- Logo & Title -->
+        <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex-shrink-0 flex items-center justify-center text-slate-900 shadow font-black text-base sm:text-xl">
+            🍪
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <h1 class="text-sm sm:text-base md:text-lg font-bold tracking-tight text-white truncate">
+                TUTU Bakery
+              </h1>
+              <span id="syncStatus" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 flex-shrink-0">
+                <span class="w-1.5 h-1.5 mr-1 bg-emerald-400 rounded-full animate-pulse"></span>
+                <span class="hidden sm:inline">Online</span>
+              </span>
+            </div>
+            <p class="text-[10px] sm:text-xs text-slate-400 truncate max-w-[150px] xs:max-w-[220px] sm:max-w-none">
+              <span class="sm:hidden">DROPSHOT • SUASIKO • BENJAMIN</span>
+              <span class="hidden sm:inline">Rekap Penjualan: DROPSHOT • SUASIKO • BENJAMIN</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-1 sm:space-x-2 no-print flex-shrink-0">
+          <button onclick="openNewOutletModal()" title="Tambah Outlet Baru" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+            <i class="fa-solid fa-store"></i> + Outlet
+          </button>
+          
+          <button onclick="exportToExcel()" title="Download Excel Sesuai Format Kertas" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white shadow-sm transition">
+            <i class="fa-solid fa-file-excel"></i> <span class="hidden sm:inline">Excel</span>
+          </button>
+
+          <button onclick="window.print()" title="Cetak Format Lembar Kertas" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 border border-slate-700 transition">
+            <i class="fa-solid fa-print"></i> <span class="hidden sm:inline">Cetak</span>
+          </button>
+
+          <button onclick="openSyncModal()" title="Pengaturan & Backup" class="p-1.5 sm:p-2 text-slate-300 hover:text-white rounded-lg hover:bg-slate-800 active:scale-95 transition">
+            <i class="fa-solid fa-gear text-sm sm:text-base"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 flex-1 w-full space-y-5">
+
+    <!-- Install Banner for Android (PWA) -->
+    <div id="pwaInstallBanner" class="hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-3 sm:p-4 text-white shadow-lg flex items-center justify-between no-print gap-2">
+      <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/20 flex-shrink-0 flex items-center justify-center text-lg sm:text-xl">
+          <i class="fa-brands fa-android text-emerald-300"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="font-bold text-xs sm:text-base truncate">Pasang di HP Android</div>
+          <div class="text-[10px] sm:text-xs text-blue-100 truncate">Akses cepat dari layar utama seperti APK!</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <button onclick="installPWA()" class="px-3 py-1.5 bg-white text-blue-700 hover:bg-blue-50 active:scale-95 rounded-xl text-xs sm:text-sm font-bold shadow transition">
+          Pasang
+        </button>
+        <button onclick="dismissInstallBanner()" class="text-white/80 hover:text-white p-1 text-base">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Cards (Overview) -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 no-print">
+      <!-- Total Penjualan -->
+      <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-500">
+          <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Total Penjualan</span>
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-50 text-brand-600 flex items-center justify-center text-xs sm:text-sm font-bold">
+            <i class="fa-solid fa-receipt"></i>
+          </div>
+        </div>
+        <div class="mt-1.5 sm:mt-2">
+          <div id="grandTotalDisplay" class="text-base sm:text-xl md:text-2xl font-black text-slate-900 truncate">Rp 0</div>
+          <div id="txCountDisplay" class="text-[11px] sm:text-xs text-slate-500 mt-0.5 truncate">0 transaksi</div>
+        </div>
+      </div>
+
+      <!-- Total Cookies -->
+      <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-500">
+          <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Cookies</span>
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs sm:text-sm font-bold">
+            🍪
+          </div>
+        </div>
+        <div class="mt-1.5 sm:mt-2">
+          <div id="totalCookiesDisplay" class="text-base sm:text-xl md:text-2xl font-black text-amber-700 truncate">Rp 0</div>
+          <div class="text-[11px] sm:text-xs text-slate-500 mt-0.5 truncate">Penjualan Cookies</div>
+        </div>
+      </div>
+
+      <!-- Total Cheesecake -->
+      <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-500">
+          <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Cheesecake</span>
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center text-xs sm:text-sm font-bold">
+            🍰
+          </div>
+        </div>
+        <div class="mt-1.5 sm:mt-2">
+          <div id="totalCheesecakeDisplay" class="text-base sm:text-xl md:text-2xl font-black text-pink-700 truncate">Rp 0</div>
+          <div class="text-[11px] sm:text-xs text-slate-500 mt-0.5 truncate">Penjualan Cheesecake</div>
+        </div>
+      </div>
+
+      <!-- Cash vs Transfer -->
+      <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-500">
+          <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider">Metode Bayar</span>
+          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs sm:text-sm font-bold">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+        </div>
+        <div class="mt-1.5 sm:mt-2 space-y-0.5">
+          <div class="flex items-center justify-between text-[11px] sm:text-xs">
+            <span class="text-emerald-700 font-semibold"><i class="fa-solid fa-money-bill-wave text-[10px]"></i> Cash:</span>
+            <span id="totalCashDisplay" class="font-bold text-slate-800">Rp 0</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] sm:text-xs">
+            <span class="text-indigo-700 font-semibold"><i class="fa-solid fa-building-columns text-[10px]"></i> Trf:</span>
+            <span id="totalTransferDisplay" class="font-bold text-slate-800">Rp 0</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- View Mode Switcher & Filter Toolbar -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 bg-white p-2.5 sm:p-3 rounded-2xl shadow-sm border border-slate-200/80 no-print">
+      <!-- Tabs View Switcher (Clean full width on mobile) -->
+      <div class="grid grid-cols-2 sm:flex p-1 bg-slate-100 rounded-xl gap-1 w-full sm:w-auto">
+        <button id="btnViewSheet" onclick="switchView('sheet')" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition bg-white text-slate-900 shadow-sm flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-table-columns text-brand-600"></i>
+          <span>Lembar 3 Kolom</span>
+        </button>
+        <button id="btnViewCards" onclick="switchView('cards')" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-list"></i>
+          <span>Per Outlet</span>
+        </button>
+      </div>
+
+      <!-- Quick Actions & Search -->
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <div class="relative flex-1 sm:w-60">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input type="text" id="searchInput" oninput="renderApp()" placeholder="Cari tanggal/nominal..." class="w-full pl-8 pr-3 py-2 sm:py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+        </div>
+        <button onclick="openInputModal()" class="px-3.5 py-2 sm:py-1.5 bg-brand-600 hover:bg-brand-500 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl shadow transition flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
+          <i class="fa-solid fa-plus"></i> <span>Input Data</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW 1: THREE-COLUMN SHEET VIEW (Exactly like the uploaded paper template) -->
+    <div id="viewSheetContainer" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-3 sm:p-4 overflow-hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2.5 border-b border-slate-100">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
+              <i class="fa-regular fa-clipboard text-brand-600"></i> Lembar Catatan Penjualan
+            </h2>
+            <span class="sm:hidden text-[10px] text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+              <i class="fa-solid fa-arrows-left-right text-[9px]"></i> Geser
+            </span>
+          </div>
+          <p class="text-[11px] sm:text-xs text-slate-500">Format 3 Kolom Bersanding (DROPSHOT • SUASIKO • BENJAMIN)</p>
+        </div>
+        <div class="flex items-center justify-between sm:justify-end gap-2 text-xs no-print pt-1 sm:pt-0">
+          <span class="text-[11px] text-slate-400 flex items-center gap-1">
+            <i class="fa-solid fa-hand-pointer text-[10px]"></i> Sentuh baris untuk edit
+          </span>
+          <button onclick="openNewOutletModal()" class="px-2 py-1 text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition flex items-center gap-1">
+            <i class="fa-solid fa-plus text-[10px]"></i> Outlet
+          </button>
+        </div>
+      </div>
+
+      <!-- Horizontal Scrollable Container for 3 Columns -->
+      <div class="ledger-scroll overflow-x-auto pb-3 -mx-1 px-1">
+        <div id="threeColumnGrid" class="inline-flex gap-3 sm:gap-4 min-w-full">
+          <!-- Dynamically populated outlet tables -->
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 2: MOBILE OUTLET CARDS VIEW -->
+    <div id="viewCardsContainer" class="hidden space-y-4">
+      <!-- Outlet Pills Tab -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" id="outletFilterPills">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Transaction Cards List -->
+      <div id="cardsListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Floating Action Button (FAB) for Mobile Data Entry -->
+  <div class="fixed bottom-6 right-6 z-40 no-print">
+    <button onclick="openInputModal()" class="w-14 h-14 rounded-full bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 active:scale-90 text-white shadow-xl flex items-center justify-center text-2xl transition transform hover:rotate-90">
+      <i class="fa-solid fa-plus"></i>
+    </button>
+  </div>
+
+  <!-- MODAL: INPUT / EDIT TRANSACTION -->
+  <div id="inputModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden transform transition-all max-h-[92vh] flex flex-col animate-in fade-in slide-in-from-bottom duration-200">
+      
+      <!-- Modal Header -->
+      <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div>
+            <h3 id="modalTitle" class="font-bold text-sm sm:text-base">Input Data Transaksi</h3>
+            <p class="text-[11px] text-slate-400">Pilih outlet, tanggal, dan nominal</p>
+          </div>
+        </div>
+        <button onclick="closeInputModal()" class="text-slate-400 hover:text-white text-xl p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Form) -->
+      <form id="transactionForm" onsubmit="handleSaveTransaction(event)" class="p-5 space-y-4 overflow-y-auto">
+        <input type="hidden" id="editTxId" value="">
+
+        <!-- Outlet Selector -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Outlet / Cabang</label>
+          <div class="grid grid-cols-3 gap-2" id="outletRadioGroup">
+            <!-- Will be populated dynamically with DROPSHOT, SUASIKO, BENJAMIN -->
+          </div>
+        </div>
+
+        <!-- Date Picker -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Tanggal (Date)</label>
+          <div class="relative">
+            <input type="date" id="inputDate" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm font-semibold text-slate-800 transition">
+          </div>
+          <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+            <span id="dateDisplayPreview">Format tampil: -</span>
+            <button type="button" onclick="setTodayDate()" class="text-brand-600 font-semibold hover:underline">Hari Ini</button>
+          </div>
+        </div>
+
+        <!-- Cookies & Cheesecake Inputs -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Cookies -->
+          <div>
+            <label class="block text-xs font-bold text-amber-800 uppercase tracking-wider mb-1.5">🍪 Cookies (Rp)</label>
+            <input type="text" id="inputCookies" inputmode="numeric" placeholder="0" oninput="formatCurrencyInput(this); calculateTotal();" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm font-bold text-slate-900 transition">
+          </div>
+
+          <!-- Cheesecake -->
+          <div>
+            <label class="block text-xs font-bold text-pink-800 uppercase tracking-wider mb-1.5">🍰 Cheesecake (Rp)</label>
+            <input type="text" id="inputCheesecake" inputmode="numeric" placeholder="0" oninput="formatCurrencyInput(this); calculateTotal();" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-sm font-bold text-slate-900 transition">
+          </div>
+        </div>
+
+        <!-- Total (Auto Calculated) -->
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-3.5 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-brand-700">Total Penjualan</div>
+            <div class="text-[11px] text-slate-500">Cookies + Cheesecake</div>
+          </div>
+          <div class="text-right">
+            <div id="inputTotalDisplay" class="text-xl font-black text-brand-700">Rp 0</div>
+          </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Metode Bayar (Pay)</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="paymentMethod" value="Cash" checked class="peer sr-only">
+              <div class="p-2.5 rounded-xl border border-slate-300 text-center font-bold text-xs peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-money-bill-wave"></i> Cash
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="paymentMethod" value="Transfer" class="peer sr-only">
+              <div class="p-2.5 rounded-xl border border-slate-300 text-center font-bold text-xs peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-building-columns"></i> Transfer
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="paymentMethod" value="QRIS" class="peer sr-only">
+              <div class="p-2.5 rounded-xl border border-slate-300 text-center font-bold text-xs peer-checked:bg-cyan-600 peer-checked:text-white peer-checked:border-cyan-600 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-qrcode"></i> QRIS
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Notes (Opsional) -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Catatan (Opsional)</label>
+          <input type="text" id="inputNotes" placeholder="Misal: titipan pesanan, dll..." class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 text-xs text-slate-800 transition">
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pt-2 flex items-center gap-2">
+          <button type="button" onclick="closeInputModal()" class="w-1/3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+            Batal
+          </button>
+          <button type="submit" class="w-2/3 py-2.5 bg-brand-600 hover:bg-brand-500 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-check"></i> <span id="saveBtnText">Simpan Transaksi</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD NEW OUTLET -->
+  <div id="newOutletModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i class="fa-solid fa-store text-brand-600"></i> Tambah Outlet Baru
+        </h3>
+        <button onclick="closeNewOutletModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Outlet</label>
+        <input type="text" id="newOutletInput" placeholder="Contoh: CAFE CENTRAL" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold uppercase focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeNewOutletModal()" class="w-1/2 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+        <button onclick="handleSaveNewOutlet()" class="w-1/2 py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-xl shadow">Tambah</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SYNC / BACKUP / SETTINGS -->
+  <div id="syncModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i class="fa-solid fa-gear text-slate-700"></i> Pengaturan & Backup
+        </h3>
+        <button onclick="closeSyncModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- IP Info for Android -->
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-xs space-y-1">
+        <div class="font-bold text-blue-900 flex items-center gap-1.5">
+          <i class="fa-brands fa-android text-emerald-600 text-sm"></i> Cara Akses dari HP Android (WiFi yang sama):
+        </div>
+        <p class="text-slate-700">Buka Chrome di Android lalu ketik alamat:</p>
+        <div class="bg-white px-2.5 py-1.5 rounded-lg border border-blue-200 font-mono font-bold text-blue-700 select-all flex items-center justify-between">
+          <span id="androidIpLink">http://192.168.1.9/TUTU/</span>
+          <button onclick="navigator.clipboard.writeText(document.getElementById('androidIpLink').innerText); showToast('Tautan disalin!');" class="text-xs text-slate-400 hover:text-slate-700">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>
+        <p class="text-slate-500 text-[11px]">Lalu tekan menu titik 3 di Chrome &gt; pilih <b>"Tambahkan ke Layar Utama" / "Install Aplikasi"</b>.</p>
+      </div>
+
+      <!-- Backup Buttons -->
+      <div class="space-y-2 pt-2">
+        <button onclick="downloadJsonBackup()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-download text-brand-600"></i> Download Cadangan (JSON Backup)</span>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+        </button>
+        
+        <label class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-between cursor-pointer transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-upload text-emerald-600"></i> Pulihkan Data (Restore JSON)</span>
+          <input type="file" accept=".json" onchange="handleRestoreJson(event)" class="hidden">
+          <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+        </label>
+
+        <button onclick="resetToDefaultData()" class="w-full py-2.5 px-3 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs rounded-xl flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Reset ke Data Contoh Awal</span>
+          <i class="fa-solid fa-chevron-right text-xs text-red-400"></i>
+        </button>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="closeSyncModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-4">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMessage">Pesan notifikasi</span>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT LOGIC -->
+  <script>
+    // Initial State & Storage
+    const STORAGE_KEY = 'tutu_bakery_records_v1';
+    let appState = {
+      outlets: ['DROPSHOT', 'SUASIKO', 'BENJAMIN'],
+      transactions: [
+        {
+          id: 'tx_1',
+          outlet: 'DROPSHOT',
+          date: '2026-10-15',
+          dateDisplay: '15 oct 2026',
+          cookies: 156000,
+          cheesecake: 120000,
+          total: 276000,
+          pay: 'Cash',
+          notes: ''
+        },
+        {
+          id: 'tx_2',
+          outlet: 'SUASIKO',
+          date: '2026-10-19',
+          dateDisplay: '19 oct 2026',
+          cookies: 300000,
+          cheesecake: 0,
+          total: 300000,
+          pay: 'Transfer',
+          notes: ''
+        },
+        {
+          id: 'tx_3',
+          outlet: 'BENJAMIN',
+          date: '2026-10-20',
+          dateDisplay: '20 oct 2026',
+          cookies: 216000,
+          cheesecake: 0,
+          total: 216000,
+          pay: 'Cash',
+          notes: ''
+        }
+      ],
+      currentView: 'sheet',
+      selectedOutletFilter: 'ALL',
+      searchQuery: ''
+    };
+
+    let deferredPrompt = null;
+
+    // Formatters
+    const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+    function formatDateDisplay(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const year = parts[0];
+        const monthIndex = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const monthName = monthNames[monthIndex] || parts[1];
+        return `${day} ${monthName} ${year}`;
+      }
+      return dateStr;
+    }
+
+    function formatRupiah(number) {
+      if (isNaN(number) || number === null || number === undefined) return '0';
+      return new Intl.NumberFormat('id-ID').format(number);
+    }
+
+    function parseRupiah(val) {
+      if (!val) return 0;
+      const clean = val.toString().replace(/[^0-9]/g, '');
+      return parseInt(clean, 10) || 0;
+    }
+
+    function formatCurrencyInput(el) {
+      const num = parseRupiah(el.value);
+      el.value = num === 0 ? '' : formatRupiah(num);
+    }
+
+    function calculateTotal() {
+      const cookies = parseRupiah(document.getElementById('inputCookies').value);
+      const cheesecake = parseRupiah(document.getElementById('inputCheesecake').value);
+      const total = cookies + cheesecake;
+      document.getElementById('inputTotalDisplay').innerText = 'Rp ' + formatRupiah(total);
+    }
+
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMsg.innerText = msg;
+      if (isSuccess) {
+        toastIcon.className = "fa-solid fa-circle-check text-emerald-400";
+      } else {
+        toastIcon.className = "fa-solid fa-triangle-exclamation text-amber-400";
+      }
+
+      toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2500);
+    }
+
+    // App Initialization
+    async function initApp() {
+      // 1. Try loading from Laragon server (api.php)
+      try {
+        const res = await fetch('api.php?action=get');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.status === 'success' && json.data) {
+            appState.outlets = json.data.outlets || appState.outlets;
+            appState.transactions = json.data.transactions || appState.transactions;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+              outlets: appState.outlets,
+              transactions: appState.transactions
+            }));
+            updateSyncStatus(true);
+          }
+        }
+      } catch (err) {
+        console.warn('Server offline, loading from local storage:', err);
+        updateSyncStatus(false);
+        // Fallback to localStorage
+        const local = localStorage.getItem(STORAGE_KEY);
+        if (local) {
+          try {
+            const parsed = JSON.parse(local);
+            if (parsed.outlets) appState.outlets = parsed.outlets;
+            if (parsed.transactions) appState.transactions = parsed.transactions;
+          } catch (e) {}
+        }
+      }
+
+      // Check current URL host for Android guide
+      if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        document.getElementById('androidIpLink').innerText = location.href;
+      }
+
+      // Date input preview watcher
+      document.getElementById('inputDate').addEventListener('change', function() {
+        document.getElementById('dateDisplayPreview').innerText = 'Format: ' + formatDateDisplay(this.value);
+      });
+
+      renderApp();
+      setupPWA();
+    }
+
+    function updateSyncStatus(isOnline) {
+      const el = document.getElementById('syncStatus');
+      if (isOnline) {
+        el.className = "inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 flex-shrink-0";
+        el.innerHTML = '<span class="w-1.5 h-1.5 mr-1 bg-emerald-400 rounded-full animate-pulse"></span> <span class="hidden sm:inline">Online</span>';
+      } else {
+        el.className = "inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950 text-amber-400 border border-amber-800 flex-shrink-0";
+        el.innerHTML = '<span class="w-1.5 h-1.5 mr-1 bg-amber-400 rounded-full"></span> <span class="hidden sm:inline">Offline</span>';
+      }
+    }
+
+    async function syncDataToServer() {
+      const payload = {
+        outlets: appState.outlets,
+        transactions: appState.transactions
+      };
+
+      // Always save to localStorage immediately
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+
+      // Attempt server sync
+      try {
+        const res = await fetch('api.php?action=save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          updateSyncStatus(true);
+        } else {
+          updateSyncStatus(false);
+        }
+      } catch (e) {
+        updateSyncStatus(false);
+      }
+    }
+
+    // View Switching
+    function switchView(view) {
+      appState.currentView = view;
+      const btnSheet = document.getElementById('btnViewSheet');
+      const btnCards = document.getElementById('btnViewCards');
+      const containerSheet = document.getElementById('viewSheetContainer');
+      const containerCards = document.getElementById('viewCardsContainer');
+
+      const activeClass = "px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition bg-white text-slate-900 shadow-sm flex items-center justify-center gap-1.5";
+      const inactiveClass = "px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1.5";
+
+      if (view === 'sheet') {
+        btnSheet.className = activeClass;
+        btnCards.className = inactiveClass;
+        containerSheet.classList.remove('hidden');
+        containerCards.classList.add('hidden');
+      } else {
+        btnCards.className = activeClass;
+        btnSheet.className = inactiveClass;
+        containerSheet.classList.add('hidden');
+        containerCards.classList.remove('hidden');
+      }
+      renderApp();
+    }
+
+    // Main Render Function
+    function renderApp() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      appState.searchQuery = query;
+
+      // Filtered transactions
+      let filteredTx = appState.transactions.filter(t => {
+        if (!query) return true;
+        return (
+          t.outlet.toLowerCase().includes(query) ||
+          t.dateDisplay.toLowerCase().includes(query) ||
+          t.pay.toLowerCase().includes(query) ||
+          t.total.toString().includes(query) ||
+          t.cookies.toString().includes(query) ||
+          t.cheesecake.toString().includes(query)
+        );
+      });
+
+      // Update Summary Totals
+      let grandTotal = 0;
+      let totalCookies = 0;
+      let totalCheesecake = 0;
+      let totalCash = 0;
+      let totalTransfer = 0;
+
+      filteredTx.forEach(t => {
+        grandTotal += (t.total || 0);
+        totalCookies += (t.cookies || 0);
+        totalCheesecake += (t.cheesecake || 0);
+        if ((t.pay || '').toLowerCase() === 'cash') {
+          totalCash += (t.total || 0);
+        } else {
+          totalTransfer += (t.total || 0);
+        }
+      });
+
+      document.getElementById('grandTotalDisplay').innerText = 'Rp ' + formatRupiah(grandTotal);
+      document.getElementById('txCountDisplay').innerText = filteredTx.length + ' transaksi tercatat';
+      document.getElementById('totalCookiesDisplay').innerText = 'Rp ' + formatRupiah(totalCookies);
+      document.getElementById('totalCheesecakeDisplay').innerText = 'Rp ' + formatRupiah(totalCheesecake);
+      document.getElementById('totalCashDisplay').innerText = 'Rp ' + formatRupiah(totalCash);
+      document.getElementById('totalTransferDisplay').innerText = 'Rp ' + formatRupiah(totalTransfer);
+
+      // Render 3-Column Sheet View
+      renderThreeColumnSheet(filteredTx);
+
+      // Render Mobile Card View
+      renderMobileCards(filteredTx);
+    }
+
+    // 1. RENDER THREE COLUMN SHEET (Matching the uploaded image)
+    function renderThreeColumnSheet(transactions) {
+      const grid = document.getElementById('threeColumnGrid');
+      grid.innerHTML = '';
+
+      appState.outlets.forEach(outletName => {
+        const outletTx = transactions.filter(t => t.outlet === outletName);
+
+        // Subtotals for this outlet
+        const outCookies = outletTx.reduce((sum, t) => sum + (t.cookies || 0), 0);
+        const outCheesecake = outletTx.reduce((sum, t) => sum + (t.cheesecake || 0), 0);
+        const outTotal = outletTx.reduce((sum, t) => sum + (t.total || 0), 0);
+
+        // Column Box
+        const colDiv = document.createElement('div');
+        colDiv.className = "flex-1 min-w-[310px] sm:min-w-[340px] max-w-[420px] bg-white border border-slate-900 table-sheet flex flex-col rounded-lg overflow-hidden shadow-sm";
+
+        // Table Header with Outlet Name
+        let tableHtml = `
+          <div class="bg-white text-slate-900 border-b border-slate-900 px-3 py-2 flex items-center justify-between sticky top-0 bg-white z-10">
+            <span class="font-black text-xs sm:text-sm uppercase tracking-wider">${outletName}</span>
+            <button onclick="openInputModalWithOutlet('${outletName}')" class="no-print text-[11px] font-bold px-2 py-0.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 rounded border border-slate-300 transition flex items-center gap-1">
+              <i class="fa-solid fa-plus text-[9px]"></i> Isi
+            </button>
+          </div>
+
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-900 text-slate-800 bg-slate-50 font-bold text-[10px] sm:text-[11px]">
+                <th class="p-1.5 border-r border-slate-900 text-center w-24">Date</th>
+                <th class="p-1.5 border-r border-slate-900 text-right">Cookies</th>
+                <th class="p-1.5 border-r border-slate-900 text-right">Cheesecake</th>
+                <th class="p-1.5 border-r border-slate-900 text-right">Total</th>
+                <th class="p-1.5 text-center w-16">Pay</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-400">
+        `;
+
+        // Rows for transactions
+        outletTx.forEach(t => {
+          const payBadgeClass = t.pay.toLowerCase() === 'cash' 
+            ? 'text-emerald-700 font-bold' 
+            : 'text-indigo-700 font-bold';
+
+          tableHtml += `
+            <tr onclick="editTransaction('${t.id}')" class="hover:bg-blue-50 cursor-pointer transition group">
+              <td class="p-1.5 border-r border-slate-900 text-center whitespace-nowrap font-medium text-slate-700 text-[11px] sm:text-xs">
+                ${t.dateDisplay}
+              </td>
+              <td class="p-1.5 border-r border-slate-900 text-right font-medium text-slate-900 text-[11px] sm:text-xs">
+                ${formatRupiah(t.cookies)}
+              </td>
+              <td class="p-1.5 border-r border-slate-900 text-right font-medium text-slate-900 text-[11px] sm:text-xs">
+                ${formatRupiah(t.cheesecake)}
+              </td>
+              <td class="p-1.5 border-r border-slate-900 text-right font-black text-slate-900 text-[11px] sm:text-xs">
+                ${formatRupiah(t.total)}
+              </td>
+              <td class="p-1.5 text-center ${payBadgeClass} text-[11px] sm:text-xs">
+                ${t.pay}
+              </td>
+            </tr>
+          `;
+        });
+
+        // Add blank placeholder rows to visually match the printed ledger lines shown in the user's paper template
+        const minRows = 16;
+        const blankRowsCount = Math.max(0, minRows - outletTx.length);
+        for (let i = 0; i < blankRowsCount; i++) {
+          tableHtml += `
+            <tr class="h-6">
+              <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
+              <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
+              <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
+              <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
+              <td class="p-1.5">&nbsp;</td>
+            </tr>
+          `;
+        }
+
+        tableHtml += `
+            </tbody>
+            <tfoot>
+              <tr class="border-t-2 border-slate-900 bg-slate-100 font-black text-[11px] text-slate-900">
+                <td class="p-1.5 border-r border-slate-900 text-center uppercase">TOTAL</td>
+                <td class="p-1.5 border-r border-slate-900 text-right">${formatRupiah(outCookies)}</td>
+                <td class="p-1.5 border-r border-slate-900 text-right">${formatRupiah(outCheesecake)}</td>
+                <td class="p-1.5 border-r border-slate-900 text-right text-brand-700">${formatRupiah(outTotal)}</td>
+                <td class="p-1.5 text-center text-[10px] text-slate-500">${outletTx.length} baris</td>
+              </tr>
+            </tfoot>
+          </table>
+        `;
+
+        colDiv.innerHTML = tableHtml;
+        grid.appendChild(colDiv);
+      });
+    }
+
+    // 2. RENDER MOBILE OUTLET CARDS
+    function renderMobileCards(transactions) {
+      // Filter Pills
+      const pillsContainer = document.getElementById('outletFilterPills');
+      let pillsHtml = `
+        <button onclick="setOutletFilter('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${appState.selectedOutletFilter === 'ALL' ? 'bg-slate-900 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+          Semua (${transactions.length})
+        </button>
+      `;
+
+      appState.outlets.forEach(out => {
+        const count = transactions.filter(t => t.outlet === out).length;
+        const active = appState.selectedOutletFilter === out;
+        pillsHtml += `
+          <button onclick="setOutletFilter('${out}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${active ? 'bg-brand-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+            ${out} (${count})
+          </button>
+        `;
+      });
+      pillsContainer.innerHTML = pillsHtml;
+
+      // Card List
+      const listContainer = document.getElementById('cardsListContainer');
+      const filtered = appState.selectedOutletFilter === 'ALL'
+        ? transactions
+        : transactions.filter(t => t.outlet === appState.selectedOutletFilter);
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-400">
+            <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
+            <p class="text-sm">Belum ada transaksi untuk outlet ini.</p>
+            <button onclick="openInputModal()" class="mt-3 px-4 py-2 bg-brand-600 text-white rounded-xl text-xs font-bold shadow hover:bg-brand-500">
+              + Input Data Sekarang
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = filtered.map(t => {
+        const isCash = t.pay.toLowerCase() === 'cash';
+        return `
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200">
+                  ${t.outlet}
+                </span>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 ${isCash ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'}">
+                  <i class="fa-solid ${isCash ? 'fa-money-bill-wave' : 'fa-building-columns'} text-[10px]"></i> ${t.pay}
+                </span>
+              </div>
+
+              <div class="text-xs text-slate-500 flex items-center gap-1.5 mb-3">
+                <i class="fa-regular fa-calendar text-slate-400"></i> ${t.dateDisplay}
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs mb-3">
+                <div>
+                  <div class="text-[10px] text-slate-400 uppercase font-semibold">Cookies</div>
+                  <div class="font-bold text-amber-700">Rp ${formatRupiah(t.cookies)}</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-400 uppercase font-semibold">Cheesecake</div>
+                  <div class="font-bold text-pink-700">Rp ${formatRupiah(t.cheesecake)}</div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+                <div class="text-xs font-bold text-slate-600">Total:</div>
+                <div class="text-base font-black text-brand-700">Rp ${formatRupiah(t.total)}</div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-2 flex items-center justify-end gap-2 text-xs">
+              <button onclick="editTransaction('${t.id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold flex items-center gap-1 transition">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button onclick="deleteTransaction('${t.id}')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-bold flex items-center gap-1 transition">
+                <i class="fa-solid fa-trash"></i> Hapus
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setOutletFilter(outlet) {
+      appState.selectedOutletFilter = outlet;
+      renderApp();
+    }
+
+    // Input Modal Handlers
+    function populateOutletRadios(selectedOutlet) {
+      const group = document.getElementById('outletRadioGroup');
+      group.innerHTML = appState.outlets.map((out, idx) => {
+        const isChecked = selectedOutlet ? out === selectedOutlet : idx === 0;
+        return `
+          <label class="cursor-pointer">
+            <input type="radio" name="inputOutlet" value="${out}" ${isChecked ? 'checked' : ''} class="peer sr-only">
+            <div class="p-2 rounded-xl border border-slate-200 text-center font-bold text-xs peer-checked:bg-slate-900 peer-checked:text-white peer-checked:border-slate-900 transition truncate">
+              ${out}
+            </div>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function setTodayDate() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const iso = `${yyyy}-${mm}-${dd}`;
+      document.getElementById('inputDate').value = iso;
+      document.getElementById('dateDisplayPreview').innerText = 'Format: ' + formatDateDisplay(iso);
+    }
+
+    function openInputModal(targetOutlet = null) {
+      document.getElementById('editTxId').value = '';
+      document.getElementById('modalTitle').innerText = 'Input Data Transaksi';
+      document.getElementById('saveBtnText').innerText = 'Simpan Transaksi';
+      document.getElementById('transactionForm').reset();
+      
+      populateOutletRadios(targetOutlet || appState.outlets[0]);
+      setTodayDate();
+
+      document.getElementById('inputCookies').value = '';
+      document.getElementById('inputCheesecake').value = '';
+      document.getElementById('inputTotalDisplay').innerText = 'Rp 0';
+      document.getElementById('inputNotes').value = '';
+
+      document.getElementById('inputModal').classList.remove('hidden');
+    }
+
+    function openInputModalWithOutlet(outlet) {
+      openInputModal(outlet);
+    }
+
+    function closeInputModal() {
+      document.getElementById('inputModal').classList.add('hidden');
+    }
+
+    function editTransaction(id) {
+      const tx = appState.transactions.find(t => t.id === id);
+      if (!tx) return;
+
+      document.getElementById('editTxId').value = tx.id;
+      document.getElementById('modalTitle').innerText = 'Edit Transaksi ' + tx.outlet;
+      document.getElementById('saveBtnText').innerText = 'Perbarui Transaksi';
+
+      populateOutletRadios(tx.outlet);
+
+      document.getElementById('inputDate').value = tx.date || '';
+      document.getElementById('dateDisplayPreview').innerText = 'Format: ' + tx.dateDisplay;
+
+      document.getElementById('inputCookies').value = tx.cookies ? formatRupiah(tx.cookies) : '';
+      document.getElementById('inputCheesecake').value = tx.cheesecake ? formatRupiah(tx.cheesecake) : '';
+      document.getElementById('inputTotalDisplay').innerText = 'Rp ' + formatRupiah(tx.total);
+      
+      // Select payment radio
+      const payRadios = document.getElementsByName('paymentMethod');
+      for (const radio of payRadios) {
+        if (radio.value.toLowerCase() === tx.pay.toLowerCase()) {
+          radio.checked = true;
+        }
+      }
+
+      document.getElementById('inputNotes').value = tx.notes || '';
+      document.getElementById('inputModal').classList.remove('hidden');
+    }
+
+    async function handleSaveTransaction(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editTxId').value;
+      const outletRadio = document.querySelector('input[name="inputOutlet"]:checked');
+      const outlet = outletRadio ? outletRadio.value : appState.outlets[0];
+      const dateVal = document.getElementById('inputDate').value;
+      const cookiesVal = parseRupiah(document.getElementById('inputCookies').value);
+      const cheesecakeVal = parseRupiah(document.getElementById('inputCheesecake').value);
+      const totalVal = cookiesVal + cheesecakeVal;
+
+      const payRadio = document.querySelector('input[name="paymentMethod"]:checked');
+      const payVal = payRadio ? payRadio.value : 'Cash';
+      const notesVal = document.getElementById('inputNotes').value.trim();
+
+      const dateDisplay = formatDateDisplay(dateVal);
+
+      if (editId) {
+        // Edit existing
+        const idx = appState.transactions.findIndex(t => t.id === editId);
+        if (idx !== -1) {
+          appState.transactions[idx] = {
+            ...appState.transactions[idx],
+            outlet,
+            date: dateVal,
+            dateDisplay,
+            cookies: cookiesVal,
+            cheesecake: cheesecakeVal,
+            total: totalVal,
+            pay: payVal,
+            notes: notesVal
+          };
+          showToast('Data transaksi berhasil diperbarui!');
+        }
+      } else {
+        // Create new
+        const newTx = {
+          id: 'tx_' + Date.now(),
+          outlet,
+          date: dateVal,
+          dateDisplay,
+          cookies: cookiesVal,
+          cheesecake: cheesecakeVal,
+          total: totalVal,
+          pay: payVal,
+          notes: notesVal
+        };
+        appState.transactions.push(newTx);
+        showToast('Data transaksi berhasil ditambahkan!');
+      }
+
+      closeInputModal();
+      renderApp();
+      await syncDataToServer();
+    }
+
+    async function deleteTransaction(id) {
+      if (confirm('Yakin ingin menghapus data transaksi ini?')) {
+        appState.transactions = appState.transactions.filter(t => t.id !== id);
+        showToast('Data dihapus!');
+        renderApp();
+        await syncDataToServer();
+      }
+    }
+
+    // New Outlet Handlers
+    function openNewOutletModal() {
+      document.getElementById('newOutletInput').value = '';
+      document.getElementById('newOutletModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('newOutletInput').focus(), 100);
+    }
+
+    function closeNewOutletModal() {
+      document.getElementById('newOutletModal').classList.add('hidden');
+    }
+
+    async function handleSaveNewOutlet() {
+      const name = document.getElementById('newOutletInput').value.trim().toUpperCase();
+      if (!name) return;
+      if (appState.outlets.includes(name)) {
+        alert('Outlet dengan nama tersebut sudah ada.');
+        return;
+      }
+      appState.outlets.push(name);
+      closeNewOutletModal();
+      showToast('Outlet ' + name + ' berhasil ditambahkan!');
+      renderApp();
+      await syncDataToServer();
+    }
+
+    // Export to Excel (.xlsx) exactly matching the 3-column paper sheet
+    function exportToExcel() {
+      if (typeof XLSX === 'undefined') {
+        alert('Library Excel belum selesai dimuat. Silakan periksa koneksi internet.');
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+
+      // Structure data:
+      // Row 1: Merged Outlet Headers (DROPSHOT, SUASIKO, BENJAMIN...)
+      // Row 2: Sub-headers (Date, Cookies, Cheesecake, Total, Pay, [Blank], Date, Cookies...)
+      // Row 3..N: Row items
+      // Row N+1: Totals
+      
+      const maxRows = Math.max(...appState.outlets.map(out => {
+        return appState.transactions.filter(t => t.outlet === out).length;
+      }), 1);
+
+      const headerRow1 = [];
+      const headerRow2 = [];
+
+      appState.outlets.forEach((out, i) => {
+        headerRow1.push(out, '', '', '', '');
+        if (i < appState.outlets.length - 1) headerRow1.push(''); // spacer
+
+        headerRow2.push('Date', 'Cookies', 'Cheesecake', 'Total', 'Pay');
+        if (i < appState.outlets.length - 1) headerRow2.push(''); // spacer
+      });
+
+      const sheetData = [headerRow1, headerRow2];
+
+      for (let r = 0; r < maxRows; r++) {
+        const row = [];
+        appState.outlets.forEach((out, i) => {
+          const outTx = appState.transactions.filter(t => t.outlet === out);
+          const t = outTx[r];
+          if (t) {
+            row.push(t.dateDisplay, t.cookies, t.cheesecake, t.total, t.pay);
+          } else {
+            row.push('', '', '', '', '');
+          }
+          if (i < appState.outlets.length - 1) row.push('');
+        });
+        sheetData.push(row);
+      }
+
+      // Add Summary Row
+      const summaryRow = [];
+      appState.outlets.forEach((out, i) => {
+        const outTx = appState.transactions.filter(t => t.outlet === out);
+        const cTotal = outTx.reduce((s, x) => s + (x.cookies || 0), 0);
+        const kTotal = outTx.reduce((s, x) => s + (x.cheesecake || 0), 0);
+        const gTotal = outTx.reduce((s, x) => s + (x.total || 0), 0);
+
+        summaryRow.push('TOTAL', cTotal, kTotal, gTotal, '');
+        if (i < appState.outlets.length - 1) summaryRow.push('');
+      });
+      sheetData.push(summaryRow);
+
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+      // Merges for header row
+      ws['!merges'] = [];
+      let colIdx = 0;
+      appState.outlets.forEach((out, i) => {
+        ws['!merges'].push({ s: { r: 0, c: colIdx }, e: { r: 0, c: colIdx + 4 } });
+        colIdx += 6;
+      });
+
+      XLSX.utils.book_append_sheet(wb, ws, "Rekap Penjualan");
+      XLSX.writeFile(wb, "Rekap_Penjualan_TUTU.xlsx");
+      showToast('File Excel berhasil diunduh!');
+    }
+
+    // Backup & Restore
+    function openSyncModal() {
+      document.getElementById('syncModal').classList.remove('hidden');
+    }
+
+    function closeSyncModal() {
+      document.getElementById('syncModal').classList.add('hidden');
+    }
+
+    function downloadJsonBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+        outlets: appState.outlets,
+        transactions: appState.transactions
+      }, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `TUTU_Backup_${new Date().toISOString().slice(0,10)}.json`);
+      dlAnchor.click();
+    }
+
+    function handleRestoreJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.transactions && parsed.outlets) {
+            appState.outlets = parsed.outlets;
+            appState.transactions = parsed.transactions;
+            renderApp();
+            await syncDataToServer();
+            showToast('Data berhasil dipulihkan dari cadangan!');
+            closeSyncModal();
+          } else {
+            alert('Format file JSON tidak sesuai.');
+          }
+        } catch (err) {
+          alert('Gagal membaca file JSON.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    async function resetToDefaultData() {
+      if (confirm('Kembalikan semua data ke data contoh awal (DROPSHOT, SUASIKO, BENJAMIN)?')) {
+        try {
+          const res = await fetch('api.php?action=reset');
+          if (res.ok) {
+            const json = await res.json();
+            appState.outlets = json.data.outlets;
+            appState.transactions = json.data.transactions;
+          }
+        } catch (e) {
+          // Local fallback reset
+          appState.outlets = ['DROPSHOT', 'SUASIKO', 'BENJAMIN'];
+          appState.transactions = [
+            { id: 'tx_1', outlet: 'DROPSHOT', date: '2026-10-15', dateDisplay: '15 oct 2026', cookies: 156000, cheesecake: 120000, total: 276000, pay: 'Cash', notes: '' },
+            { id: 'tx_2', outlet: 'SUASIKO', date: '2026-10-19', dateDisplay: '19 oct 2026', cookies: 300000, cheesecake: 0, total: 300000, pay: 'Transfer', notes: '' },
+            { id: 'tx_3', outlet: 'BENJAMIN', date: '2026-10-20', dateDisplay: '20 oct 2026', cookies: 216000, cheesecake: 0, total: 216000, pay: 'Cash', notes: '' }
+          ];
+        }
+        closeSyncModal();
+        renderApp();
+        await syncDataToServer();
+        showToast('Data berhasil direset.');
+      }
+    }
+
+    // PWA Service Worker & Install Logic
+    function setupPWA() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(() => {
+          console.log('Service Worker registered successfully');
+        }).catch(err => console.log('SW failed', err));
+      }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('pwaInstallBanner').classList.remove('hidden');
+      });
+    }
+
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            showToast('Aplikasi berhasil dipasang di HP Android!');
+          }
+          deferredPrompt = null;
+          document.getElementById('pwaInstallBanner').classList.add('hidden');
+        });
+      } else {
+        alert('Untuk memasang di HP Android:\n1. Buka menu titik 3 di browser Chrome\n2. Pilih "Tambahkan ke Layar Utama" / "Install Aplikasi"');
+      }
+    }
+
+    function dismissInstallBanner() {
+      document.getElementById('pwaInstallBanner').classList.add('hidden');
+    }
+
+    // Boot App
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
