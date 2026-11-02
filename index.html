@@ -235,7 +235,7 @@
       <div class="grid grid-cols-2 sm:flex p-1 bg-slate-100 rounded-xl gap-1 w-full sm:w-auto">
         <button id="btnViewSheet" onclick="switchView('sheet')" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition bg-white text-slate-900 shadow-sm flex items-center justify-center gap-1.5">
           <i class="fa-solid fa-table-columns text-brand-600"></i>
-          <span>Lembar 3 Kolom</span>
+          <span>Lembar Catatan</span>
         </button>
         <button id="btnViewCards" onclick="switchView('cards')" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1.5">
           <i class="fa-solid fa-list"></i>
@@ -257,7 +257,7 @@
 
     <!-- VIEW 1: THREE-COLUMN SHEET VIEW (Exactly like the uploaded paper template) -->
     <div id="viewSheetContainer" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-3 sm:p-4 overflow-hidden">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2.5 border-b border-slate-100">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-100">
         <div>
           <div class="flex items-center gap-2">
             <h2 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
@@ -267,13 +267,21 @@
               <i class="fa-solid fa-arrows-left-right text-[9px]"></i> Geser
             </span>
           </div>
-          <p class="text-[11px] sm:text-xs text-slate-500">Format 3 Kolom Bersanding (DROPSHOT • SUASIKO • BENJAMIN)</p>
+          <p id="sheetSubtitle" class="text-[11px] sm:text-xs text-slate-500">Rekap transaksi & stok per outlet</p>
         </div>
-        <div class="flex items-center justify-between sm:justify-end gap-2 text-xs no-print pt-1 sm:pt-0">
-          <span class="text-[11px] text-slate-400 flex items-center gap-1">
-            <i class="fa-solid fa-hand-pointer text-[10px]"></i> Sentuh baris untuk edit
-          </span>
-          <button onclick="openNewOutletModal()" class="px-2 py-1 text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition flex items-center gap-1">
+
+        <!-- Filter Dropdown Outlet & Action -->
+        <div class="flex items-center justify-between sm:justify-end gap-2 text-xs no-print flex-wrap">
+          <div class="flex items-center gap-1.5">
+            <label for="sheetOutletSelect" class="text-[11px] font-bold text-slate-600 flex items-center gap-1 whitespace-nowrap">
+              <i class="fa-solid fa-filter text-brand-600"></i> Outlet:
+            </label>
+            <select id="sheetOutletSelect" onchange="handleSheetOutletChange(this.value)" class="text-xs font-semibold px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 text-slate-800 transition">
+              <!-- Rendered dynamically -->
+            </select>
+          </div>
+
+          <button onclick="openNewOutletModal()" class="px-2.5 py-1.5 text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-xl transition flex items-center gap-1 shadow-sm">
             <i class="fa-solid fa-plus text-[10px]"></i> Outlet
           </button>
         </div>
@@ -623,6 +631,7 @@
       ],
       currentView: 'sheet',
       selectedOutletFilter: 'ALL',
+      selectedSheetOutlet: 'ALL',
       searchQuery: ''
     };
 
@@ -1066,12 +1075,43 @@
       renderMobileCards(filteredTx);
     }
 
-    // 1. RENDER THREE COLUMN SHEET (Matching the uploaded image)
+    // Dropdown Outlet Selector Handler
+    function handleSheetOutletChange(val) {
+      appState.selectedSheetOutlet = val;
+      renderApp();
+    }
+
+    // 1. RENDER SHEET VIEW (Bersanding / Dropdown per Outlet)
     function renderThreeColumnSheet(transactions) {
+      // Update Dropdown Options
+      const selectEl = document.getElementById('sheetOutletSelect');
+      if (selectEl) {
+        const currentVal = appState.selectedSheetOutlet || 'ALL';
+        let selectHtml = `<option value="ALL">Semua Outlet (${appState.outlets.length})</option>`;
+        appState.outlets.forEach(out => {
+          selectHtml += `<option value="${out}" ${currentVal === out ? 'selected' : ''}>${out}</option>`;
+        });
+        selectEl.innerHTML = selectHtml;
+      }
+
+      // Update Subtitle Info
+      const subtitleEl = document.getElementById('sheetSubtitle');
+      if (subtitleEl) {
+        if (appState.selectedSheetOutlet && appState.selectedSheetOutlet !== 'ALL') {
+          subtitleEl.innerText = 'Menampilkan outlet: ' + appState.selectedSheetOutlet;
+        } else {
+          subtitleEl.innerText = 'Menampilkan semua ' + appState.outlets.length + ' outlet bersanding';
+        }
+      }
+
       const grid = document.getElementById('threeColumnGrid');
       grid.innerHTML = '';
 
-      appState.outlets.forEach(outletName => {
+      const targetOutlets = (appState.selectedSheetOutlet && appState.selectedSheetOutlet !== 'ALL')
+        ? [appState.selectedSheetOutlet]
+        : appState.outlets;
+
+      targetOutlets.forEach(outletName => {
         const outletTx = transactions.filter(t => t.outlet === outletName);
 
         // Subtotals for this outlet
