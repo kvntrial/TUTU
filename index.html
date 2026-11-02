@@ -353,18 +353,40 @@
           </div>
         </div>
 
-        <!-- Cookies & Cheesecake Inputs -->
-        <div class="grid grid-cols-2 gap-3">
-          <!-- Cookies -->
-          <div>
-            <label class="block text-xs font-bold text-amber-800 uppercase tracking-wider mb-1.5">🍪 Cookies (Rp)</label>
-            <input type="text" id="inputCookies" inputmode="numeric" placeholder="0" oninput="formatCurrencyInput(this); calculateTotal();" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm font-bold text-slate-900 transition">
+        <!-- Stok Dikirim (pcs sent to outlet) -->
+        <div class="bg-teal-50 border border-teal-200 rounded-2xl p-3 space-y-2">
+          <div class="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-truck text-teal-600"></i> Stok Dikirim ke Outlet
           </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-teal-700 mb-1">🍪 Cookies (pcs)</label>
+              <input type="number" id="inputStockCookies" inputmode="numeric" placeholder="0" min="0" class="w-full px-3 py-2 rounded-xl border border-teal-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm font-bold text-slate-900 transition bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-teal-700 mb-1">🍰 Cheesecake (pcs)</label>
+              <input type="number" id="inputStockCheesecake" inputmode="numeric" placeholder="0" min="0" class="w-full px-3 py-2 rounded-xl border border-teal-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm font-bold text-slate-900 transition bg-white">
+            </div>
+          </div>
+        </div>
 
-          <!-- Cheesecake -->
-          <div>
-            <label class="block text-xs font-bold text-pink-800 uppercase tracking-wider mb-1.5">🍰 Cheesecake (Rp)</label>
-            <input type="text" id="inputCheesecake" inputmode="numeric" placeholder="0" oninput="formatCurrencyInput(this); calculateTotal();" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-sm font-bold text-slate-900 transition">
+        <!-- Penjualan (Cookies & Cheesecake) -->
+        <div>
+          <div class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-cash-register text-slate-500"></i> Penjualan (Rp)
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Cookies -->
+            <div>
+              <label class="block text-xs font-bold text-amber-800 uppercase tracking-wider mb-1.5">🍪 Cookies (Rp)</label>
+              <input type="text" id="inputCookies" inputmode="numeric" placeholder="0" oninput="formatCurrencyInput(this); calculateTotal();" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm font-bold text-slate-900 transition">
+            </div>
+
+            <!-- Cheesecake -->
+            <div>
+              <label class="block text-xs font-bold text-pink-800 uppercase tracking-wider mb-1.5">🍰 Cheesecake (Rp)</label>
+              <input type="text" id="inputCheesecake" inputmode="numeric" placeholder="0" oninput="formatCurrencyInput(this); calculateTotal();" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-sm font-bold text-slate-900 transition">
+            </div>
           </div>
         </div>
 
@@ -509,23 +531,18 @@
         <p class="text-slate-500 text-[11px]">Lalu tekan menu titik 3 di Chrome &gt; pilih <b>"Tambahkan ke Layar Utama" / "Install Aplikasi"</b>.</p>
       </div>
 
-      <!-- Backup Buttons -->
+      <!-- Admin Panel Shortcut -->
       <div class="space-y-2 pt-2">
-        <button onclick="downloadJsonBackup()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-between transition">
-          <span class="flex items-center gap-2"><i class="fa-solid fa-download text-brand-600"></i> Download Cadangan (JSON Backup)</span>
-          <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
-        </button>
-        
-        <label class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-between cursor-pointer transition">
-          <span class="flex items-center gap-2"><i class="fa-solid fa-upload text-emerald-600"></i> Pulihkan Data (Restore JSON)</span>
-          <input type="file" accept=".json" onchange="handleRestoreJson(event)" class="hidden">
-          <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
-        </label>
-
-        <button onclick="resetToDefaultData()" class="w-full py-2.5 px-3 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs rounded-xl flex items-center justify-between transition">
-          <span class="flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Reset ke Data Contoh Awal</span>
-          <i class="fa-solid fa-chevron-right text-xs text-red-400"></i>
-        </button>
+        <a href="admin.html" class="w-full py-3 px-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-between shadow-sm transition group">
+          <span class="flex items-center gap-2.5">
+            <i class="fa-solid fa-shield-halved text-amber-400 text-sm"></i>
+            <span>Buka Panel Admin (Backup & Reset)</span>
+          </span>
+          <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400 group-hover:text-white transition"></i>
+        </a>
+        <p class="text-[11px] text-slate-500 leading-relaxed px-1">
+          Menu Download Cadangan, Pulihkan Data, dan Reset Database kini diamankan di Halaman Admin khusus agar tidak sengaja terpencet.
+        </p>
       </div>
 
       <div class="pt-2">
@@ -1037,6 +1054,8 @@
         const outCookies = outletTx.reduce((sum, t) => sum + (t.cookies || 0), 0);
         const outCheesecake = outletTx.reduce((sum, t) => sum + (t.cheesecake || 0), 0);
         const outTotal = outletTx.reduce((sum, t) => sum + (t.total || 0), 0);
+        const outStockCookies = outletTx.reduce((sum, t) => sum + (t.stockCookies || 0), 0);
+        const outStockCheesecake = outletTx.reduce((sum, t) => sum + (t.stockCheesecake || 0), 0);
 
         // Column Box
         const colDiv = document.createElement('div');
@@ -1055,6 +1074,8 @@
             <thead>
               <tr class="border-b border-slate-900 text-slate-800 bg-slate-50 font-bold text-[10px] sm:text-[11px]">
                 <th class="p-1.5 border-r border-slate-900 text-center w-24">Date</th>
+                <th class="p-1.5 border-r border-slate-900 text-center text-teal-700 bg-teal-50 whitespace-nowrap">🚚 Krm🍪</th>
+                <th class="p-1.5 border-r border-slate-900 text-center text-teal-700 bg-teal-50 whitespace-nowrap">🚚 Krm🍰</th>
                 <th class="p-1.5 border-r border-slate-900 text-right">Cookies</th>
                 <th class="p-1.5 border-r border-slate-900 text-right">Cheesecake</th>
                 <th class="p-1.5 border-r border-slate-900 text-right">Total</th>
@@ -1074,6 +1095,12 @@
             <tr onclick="editTransaction('${t.id}')" class="hover:bg-blue-50 cursor-pointer transition group">
               <td class="p-1.5 border-r border-slate-900 text-center whitespace-nowrap font-medium text-slate-700 text-[11px] sm:text-xs">
                 ${t.dateDisplay}
+              </td>
+              <td class="p-1.5 border-r border-slate-900 text-center font-bold text-teal-700 bg-teal-50/50 text-[11px] sm:text-xs">
+                ${t.stockCookies > 0 ? t.stockCookies + ' pcs' : '-'}
+              </td>
+              <td class="p-1.5 border-r border-slate-900 text-center font-bold text-teal-700 bg-teal-50/50 text-[11px] sm:text-xs">
+                ${t.stockCheesecake > 0 ? t.stockCheesecake + ' pcs' : '-'}
               </td>
               <td class="p-1.5 border-r border-slate-900 text-right font-medium text-slate-900 text-[11px] sm:text-xs">
                 ${formatRupiah(t.cookies)}
@@ -1098,6 +1125,8 @@
           tableHtml += `
             <tr class="h-6">
               <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
+              <td class="p-1.5 border-r border-slate-900 bg-teal-50/20">&nbsp;</td>
+              <td class="p-1.5 border-r border-slate-900 bg-teal-50/20">&nbsp;</td>
               <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
               <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
               <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
@@ -1111,6 +1140,8 @@
             <tfoot>
               <tr class="border-t-2 border-slate-900 bg-slate-100 font-black text-[11px] text-slate-900">
                 <td class="p-1.5 border-r border-slate-900 text-center uppercase">TOTAL</td>
+                <td class="p-1.5 border-r border-slate-900 text-center text-teal-700 bg-teal-100">${outStockCookies > 0 ? outStockCookies + ' pcs' : '-'}</td>
+                <td class="p-1.5 border-r border-slate-900 text-center text-teal-700 bg-teal-100">${outStockCheesecake > 0 ? outStockCheesecake + ' pcs' : '-'}</td>
                 <td class="p-1.5 border-r border-slate-900 text-right">${formatRupiah(outCookies)}</td>
                 <td class="p-1.5 border-r border-slate-900 text-right">${formatRupiah(outCheesecake)}</td>
                 <td class="p-1.5 border-r border-slate-900 text-right text-brand-700">${formatRupiah(outTotal)}</td>
@@ -1183,6 +1214,13 @@
                 <i class="fa-regular fa-calendar text-slate-400"></i> ${t.dateDisplay}
               </div>
 
+              ${(t.stockCookies > 0 || t.stockCheesecake > 0) ? `
+              <div class="flex items-center flex-wrap gap-2 bg-teal-50 border border-teal-200 rounded-xl px-2.5 py-1.5 text-[11px] mb-2">
+                <i class="fa-solid fa-truck text-teal-600 text-[10px]"></i>
+                <span class="font-semibold text-teal-700">Stok Dikirim:</span>
+                ${t.stockCookies > 0 ? `<span class="font-bold text-teal-900">🍪 ${t.stockCookies} pcs</span>` : ''}
+                ${t.stockCheesecake > 0 ? `<span class="font-bold text-teal-900">🍰 ${t.stockCheesecake} pcs</span>` : ''}
+              </div>` : ''}
               <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs mb-3">
                 <div>
                   <div class="text-[10px] text-slate-400 uppercase font-semibold">Cookies</div>
@@ -1253,6 +1291,8 @@
       populateOutletRadios(targetOutlet || appState.outlets[0]);
       setTodayDate();
 
+      document.getElementById('inputStockCookies').value = '';
+      document.getElementById('inputStockCheesecake').value = '';
       document.getElementById('inputCookies').value = '';
       document.getElementById('inputCheesecake').value = '';
       document.getElementById('inputTotalDisplay').innerText = 'Rp 0';
@@ -1282,6 +1322,8 @@
       document.getElementById('inputDate').value = tx.date || '';
       document.getElementById('dateDisplayPreview').innerText = 'Format: ' + tx.dateDisplay;
 
+      document.getElementById('inputStockCookies').value = tx.stockCookies || '';
+      document.getElementById('inputStockCheesecake').value = tx.stockCheesecake || '';
       document.getElementById('inputCookies').value = tx.cookies ? formatRupiah(tx.cookies) : '';
       document.getElementById('inputCheesecake').value = tx.cheesecake ? formatRupiah(tx.cheesecake) : '';
       document.getElementById('inputTotalDisplay').innerText = 'Rp ' + formatRupiah(tx.total);
@@ -1307,6 +1349,8 @@
       const cookiesVal = parseRupiah(document.getElementById('inputCookies').value);
       const cheesecakeVal = parseRupiah(document.getElementById('inputCheesecake').value);
       const totalVal = cookiesVal + cheesecakeVal;
+      const stockCookiesVal = parseInt(document.getElementById('inputStockCookies').value || '0', 10) || 0;
+      const stockCheesecakeVal = parseInt(document.getElementById('inputStockCheesecake').value || '0', 10) || 0;
 
       const payRadio = document.querySelector('input[name="paymentMethod"]:checked');
       const payVal = payRadio ? payRadio.value : 'Cash';
@@ -1323,6 +1367,8 @@
             outlet,
             date: dateVal,
             dateDisplay,
+            stockCookies: stockCookiesVal,
+            stockCheesecake: stockCheesecakeVal,
             cookies: cookiesVal,
             cheesecake: cheesecakeVal,
             total: totalVal,
@@ -1338,6 +1384,8 @@
           outlet,
           date: dateVal,
           dateDisplay,
+          stockCookies: stockCookiesVal,
+          stockCheesecake: stockCheesecakeVal,
           cookies: cookiesVal,
           cheesecake: cheesecakeVal,
           total: totalVal,
@@ -1387,7 +1435,7 @@
       await syncDataToServer();
     }
 
-    // Export to Excel (.xlsx) exactly matching the 3-column paper sheet
+    // Export to Excel (.xlsx) exactly matching the 3-column paper sheet (including Stok Dikirim)
     function exportToExcel() {
       if (typeof XLSX === 'undefined') {
         alert('Library Excel belum selesai dimuat. Silakan periksa koneksi internet.');
@@ -1397,11 +1445,8 @@
       const wb = XLSX.utils.book_new();
 
       // Structure data:
-      // Row 1: Merged Outlet Headers (DROPSHOT, SUASIKO, BENJAMIN...)
-      // Row 2: Sub-headers (Date, Cookies, Cheesecake, Total, Pay, [Blank], Date, Cookies...)
-      // Row 3..N: Row items
-      // Row N+1: Totals
-      
+      // Row 1: Merged Outlet Headers
+      // Row 2: Sub-headers (Date, Krm Cookies, Krm Cheesecake, Cookies, Cheesecake, Total, Pay, [Blank]...)
       const maxRows = Math.max(...appState.outlets.map(out => {
         return appState.transactions.filter(t => t.outlet === out).length;
       }), 1);
@@ -1410,10 +1455,10 @@
       const headerRow2 = [];
 
       appState.outlets.forEach((out, i) => {
-        headerRow1.push(out, '', '', '', '');
+        headerRow1.push(out, '', '', '', '', '', '');
         if (i < appState.outlets.length - 1) headerRow1.push(''); // spacer
 
-        headerRow2.push('Date', 'Cookies', 'Cheesecake', 'Total', 'Pay');
+        headerRow2.push('Date', 'Kirim 🍪 (pcs)', 'Kirim 🍰 (pcs)', 'Cookies (Rp)', 'Cheesecake (Rp)', 'Total (Rp)', 'Pay');
         if (i < appState.outlets.length - 1) headerRow2.push(''); // spacer
       });
 
@@ -1425,9 +1470,17 @@
           const outTx = appState.transactions.filter(t => t.outlet === out);
           const t = outTx[r];
           if (t) {
-            row.push(t.dateDisplay, t.cookies, t.cheesecake, t.total, t.pay);
+            row.push(
+              t.dateDisplay,
+              t.stockCookies || 0,
+              t.stockCheesecake || 0,
+              t.cookies || 0,
+              t.cheesecake || 0,
+              t.total || 0,
+              t.pay || 'Cash'
+            );
           } else {
-            row.push('', '', '', '', '');
+            row.push('', '', '', '', '', '', '');
           }
           if (i < appState.outlets.length - 1) row.push('');
         });
@@ -1438,11 +1491,13 @@
       const summaryRow = [];
       appState.outlets.forEach((out, i) => {
         const outTx = appState.transactions.filter(t => t.outlet === out);
+        const skTotal = outTx.reduce((s, x) => s + (x.stockCookies || 0), 0);
+        const scTotal = outTx.reduce((s, x) => s + (x.stockCheesecake || 0), 0);
         const cTotal = outTx.reduce((s, x) => s + (x.cookies || 0), 0);
         const kTotal = outTx.reduce((s, x) => s + (x.cheesecake || 0), 0);
         const gTotal = outTx.reduce((s, x) => s + (x.total || 0), 0);
 
-        summaryRow.push('TOTAL', cTotal, kTotal, gTotal, '');
+        summaryRow.push('TOTAL', skTotal, scTotal, cTotal, kTotal, gTotal, '');
         if (i < appState.outlets.length - 1) summaryRow.push('');
       });
       sheetData.push(summaryRow);
@@ -1453,8 +1508,8 @@
       ws['!merges'] = [];
       let colIdx = 0;
       appState.outlets.forEach((out, i) => {
-        ws['!merges'].push({ s: { r: 0, c: colIdx }, e: { r: 0, c: colIdx + 4 } });
-        colIdx += 6;
+        ws['!merges'].push({ s: { r: 0, c: colIdx }, e: { r: 0, c: colIdx + 6 } });
+        colIdx += 8;
       });
 
       XLSX.utils.book_append_sheet(wb, ws, "Rekap Penjualan");
