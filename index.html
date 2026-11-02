@@ -1077,7 +1077,7 @@
 
         // Column Box
         const colDiv = document.createElement('div');
-        colDiv.className = "flex-1 min-w-[310px] sm:min-w-[340px] max-w-[420px] bg-white border border-slate-900 table-sheet flex flex-col rounded-lg overflow-hidden shadow-sm";
+        colDiv.className = "flex-1 min-w-[420px] sm:min-w-[460px] lg:min-w-[490px] bg-white border border-slate-900 table-sheet flex flex-col rounded-xl overflow-hidden shadow-sm";
 
         // Table Header with Outlet Name
         let tableHtml = `
@@ -1091,14 +1091,14 @@
           <table class="w-full text-xs text-left border-collapse">
             <thead>
               <tr class="border-b border-slate-900 text-slate-800 bg-slate-50 font-bold text-[10px] sm:text-[11px]">
-                <th class="p-1.5 border-r border-slate-900 text-center whitespace-nowrap" title="Tanggal Stok Dikirim">Tgl Kirim</th>
-                <th class="p-1.5 border-r border-slate-900 text-center text-teal-700 bg-teal-50 whitespace-nowrap">🚚 Krm🍪</th>
-                <th class="p-1.5 border-r border-slate-900 text-center text-teal-700 bg-teal-50 whitespace-nowrap">🚚 Krm🍰</th>
-                <th class="p-1.5 border-r border-slate-900 text-right">Cookies</th>
-                <th class="p-1.5 border-r border-slate-900 text-right">Cheesecake</th>
-                <th class="p-1.5 border-r border-slate-900 text-right">Total</th>
-                <th class="p-1.5 border-r border-slate-900 text-center whitespace-nowrap" title="Tanggal Uang Diterima">Tgl Masuk</th>
-                <th class="p-1.5 text-center w-14">Pay</th>
+                <th class="px-2 py-1.5 border-r border-slate-900 text-center whitespace-nowrap min-w-[85px]" title="Tanggal Stok Dikirim">Tgl Kirim</th>
+                <th class="px-1.5 py-1.5 border-r border-slate-900 text-center text-teal-800 bg-teal-50/80 whitespace-nowrap min-w-[55px]">🚚 Krm🍪</th>
+                <th class="px-1.5 py-1.5 border-r border-slate-900 text-center text-teal-800 bg-teal-50/80 whitespace-nowrap min-w-[55px]">🚚 Krm🍰</th>
+                <th class="px-2 py-1.5 border-r border-slate-900 text-right whitespace-nowrap min-w-[75px]">Cookies</th>
+                <th class="px-2 py-1.5 border-r border-slate-900 text-right whitespace-nowrap min-w-[75px]">Cheesecake</th>
+                <th class="px-2 py-1.5 border-r border-slate-900 text-right whitespace-nowrap min-w-[75px]">Total</th>
+                <th class="px-2 py-1.5 border-r border-slate-900 text-center text-emerald-900 bg-emerald-50/80 whitespace-nowrap min-w-[85px]" title="Tanggal Uang Diterima">Tgl Masuk</th>
+                <th class="px-1.5 py-1.5 text-center whitespace-nowrap min-w-[45px]">Pay</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-400">
@@ -1112,28 +1112,28 @@
 
           tableHtml += `
             <tr onclick="editTransaction('${t.id}')" class="hover:bg-blue-50 cursor-pointer transition group">
-              <td class="p-1.5 border-r border-slate-900 text-center whitespace-nowrap font-medium text-slate-700 text-[11px] sm:text-xs">
+              <td class="px-2 py-1.5 border-r border-slate-900 text-center whitespace-nowrap font-semibold text-slate-700 text-[11px] sm:text-xs">
                 ${t.dateDisplay}
               </td>
-              <td class="p-1.5 border-r border-slate-900 text-center font-bold text-teal-700 bg-teal-50/50 text-[11px] sm:text-xs">
+              <td class="px-1.5 py-1.5 border-r border-slate-900 text-center font-bold text-teal-700 bg-teal-50/40 text-[11px] sm:text-xs whitespace-nowrap">
                 ${t.stockCookies > 0 ? t.stockCookies + ' pcs' : '-'}
               </td>
-              <td class="p-1.5 border-r border-slate-900 text-center font-bold text-teal-700 bg-teal-50/50 text-[11px] sm:text-xs">
+              <td class="px-1.5 py-1.5 border-r border-slate-900 text-center font-bold text-teal-700 bg-teal-50/40 text-[11px] sm:text-xs whitespace-nowrap">
                 ${t.stockCheesecake > 0 ? t.stockCheesecake + ' pcs' : '-'}
               </td>
-              <td class="p-1.5 border-r border-slate-900 text-right font-medium text-slate-900 text-[11px] sm:text-xs">
+              <td class="px-2 py-1.5 border-r border-slate-900 text-right font-medium text-slate-900 text-[11px] sm:text-xs whitespace-nowrap">
                 ${formatRupiah(t.cookies)}
               </td>
-              <td class="p-1.5 border-r border-slate-900 text-right font-medium text-slate-900 text-[11px] sm:text-xs">
+              <td class="px-2 py-1.5 border-r border-slate-900 text-right font-medium text-slate-900 text-[11px] sm:text-xs whitespace-nowrap">
                 ${formatRupiah(t.cheesecake)}
               </td>
-              <td class="p-1.5 border-r border-slate-900 text-right font-black text-slate-900 text-[11px] sm:text-xs">
+              <td class="px-2 py-1.5 border-r border-slate-900 text-right font-black text-slate-900 text-[11px] sm:text-xs whitespace-nowrap">
                 ${formatRupiah(t.total)}
               </td>
-              <td class="p-1.5 border-r border-slate-900 text-center whitespace-nowrap font-medium text-emerald-800 bg-emerald-50/30 text-[10px] sm:text-[11px]">
+              <td class="px-2 py-1.5 border-r border-slate-900 text-center whitespace-nowrap font-bold text-emerald-800 bg-emerald-50/50 text-[11px] sm:text-xs">
                 ${t.paymentDateDisplay || t.dateDisplay}
               </td>
-              <td class="p-1.5 text-center ${payBadgeClass} text-[11px] sm:text-xs">
+              <td class="px-1.5 py-1.5 text-center ${payBadgeClass} text-[11px] sm:text-xs whitespace-nowrap">
                 ${t.pay}
               </td>
             </tr>

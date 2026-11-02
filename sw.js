@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tutu-bakery-v6';
+const CACHE_NAME = 'tutu-bakery-v7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
