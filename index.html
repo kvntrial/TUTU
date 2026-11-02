@@ -341,15 +341,30 @@
           </div>
         </div>
 
-        <!-- Date Picker -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Tanggal (Date)</label>
-          <div class="relative">
-            <input type="date" id="inputDate" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm font-semibold text-slate-800 transition">
+        <!-- Date Pickers (Tanggal Kirim & Tanggal Terima Uang) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Tanggal Kirim Stok -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-truck text-teal-600"></i> Tgl Kirim Stok
+            </label>
+            <input type="date" id="inputDate" required class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 text-xs font-semibold text-slate-800 transition">
+            <div class="text-[10px] text-slate-500 mt-1 flex items-center justify-between">
+              <span id="dateDisplayPreview">-</span>
+              <button type="button" onclick="setTodayDate()" class="text-brand-600 font-semibold hover:underline">Hari Ini</button>
+            </div>
           </div>
-          <div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-            <span id="dateDisplayPreview">Format tampil: -</span>
-            <button type="button" onclick="setTodayDate()" class="text-brand-600 font-semibold hover:underline">Hari Ini</button>
+
+          <!-- Tanggal Terima Uang / Setor -->
+          <div>
+            <label class="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> Tgl Terima Uang
+            </label>
+            <input type="date" id="inputPaymentDate" class="w-full px-3 py-2 rounded-xl border border-emerald-300 focus:ring-2 focus:ring-emerald-500 bg-emerald-50/40 text-xs font-semibold text-slate-800 transition">
+            <div class="text-[10px] text-slate-500 mt-1 flex items-center justify-between">
+              <span id="paymentDateDisplayPreview">-</span>
+              <button type="button" onclick="setTodayPaymentDate()" class="text-emerald-700 font-semibold hover:underline">Hari Ini</button>
+            </div>
           </div>
         </div>
 
@@ -913,9 +928,12 @@
         document.getElementById('androidIpLink').innerText = location.href;
       }
 
-      // Date input preview watcher
+      // Date input preview watchers
       document.getElementById('inputDate').addEventListener('change', function() {
-        document.getElementById('dateDisplayPreview').innerText = 'Format: ' + formatDateDisplay(this.value);
+        document.getElementById('dateDisplayPreview').innerText = formatDateDisplay(this.value);
+      });
+      document.getElementById('inputPaymentDate').addEventListener('change', function() {
+        document.getElementById('paymentDateDisplayPreview').innerText = formatDateDisplay(this.value);
       });
 
       renderApp();
@@ -1073,13 +1091,14 @@
           <table class="w-full text-xs text-left border-collapse">
             <thead>
               <tr class="border-b border-slate-900 text-slate-800 bg-slate-50 font-bold text-[10px] sm:text-[11px]">
-                <th class="p-1.5 border-r border-slate-900 text-center w-24">Date</th>
+                <th class="p-1.5 border-r border-slate-900 text-center whitespace-nowrap" title="Tanggal Stok Dikirim">Tgl Kirim</th>
                 <th class="p-1.5 border-r border-slate-900 text-center text-teal-700 bg-teal-50 whitespace-nowrap">🚚 Krm🍪</th>
                 <th class="p-1.5 border-r border-slate-900 text-center text-teal-700 bg-teal-50 whitespace-nowrap">🚚 Krm🍰</th>
                 <th class="p-1.5 border-r border-slate-900 text-right">Cookies</th>
                 <th class="p-1.5 border-r border-slate-900 text-right">Cheesecake</th>
                 <th class="p-1.5 border-r border-slate-900 text-right">Total</th>
-                <th class="p-1.5 text-center w-16">Pay</th>
+                <th class="p-1.5 border-r border-slate-900 text-center whitespace-nowrap" title="Tanggal Uang Diterima">Tgl Masuk</th>
+                <th class="p-1.5 text-center w-14">Pay</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-400">
@@ -1111,6 +1130,9 @@
               <td class="p-1.5 border-r border-slate-900 text-right font-black text-slate-900 text-[11px] sm:text-xs">
                 ${formatRupiah(t.total)}
               </td>
+              <td class="p-1.5 border-r border-slate-900 text-center whitespace-nowrap font-medium text-emerald-800 bg-emerald-50/30 text-[10px] sm:text-[11px]">
+                ${t.paymentDateDisplay || t.dateDisplay}
+              </td>
               <td class="p-1.5 text-center ${payBadgeClass} text-[11px] sm:text-xs">
                 ${t.pay}
               </td>
@@ -1130,6 +1152,7 @@
               <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
               <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
               <td class="p-1.5 border-r border-slate-900">&nbsp;</td>
+              <td class="p-1.5 border-r border-slate-900 bg-emerald-50/20">&nbsp;</td>
               <td class="p-1.5">&nbsp;</td>
             </tr>
           `;
@@ -1145,6 +1168,7 @@
                 <td class="p-1.5 border-r border-slate-900 text-right">${formatRupiah(outCookies)}</td>
                 <td class="p-1.5 border-r border-slate-900 text-right">${formatRupiah(outCheesecake)}</td>
                 <td class="p-1.5 border-r border-slate-900 text-right text-brand-700">${formatRupiah(outTotal)}</td>
+                <td class="p-1.5 border-r border-slate-900 text-center text-[10px] text-slate-500 bg-slate-50">-</td>
                 <td class="p-1.5 text-center text-[10px] text-slate-500">${outletTx.length} baris</td>
               </tr>
             </tfoot>
@@ -1210,8 +1234,19 @@
                 </span>
               </div>
 
-              <div class="text-xs text-slate-500 flex items-center gap-1.5 mb-3">
-                <i class="fa-regular fa-calendar text-slate-400"></i> ${t.dateDisplay}
+              <div class="grid grid-cols-2 gap-2 text-xs mb-3">
+                <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-2">
+                  <div class="text-[10px] text-slate-400 font-semibold uppercase flex items-center gap-1">
+                    <i class="fa-solid fa-truck text-teal-600"></i> Kirim Stok
+                  </div>
+                  <div class="font-bold text-slate-700 text-[11px] mt-0.5">${t.dateDisplay}</div>
+                </div>
+                <div class="bg-emerald-50/60 border border-emerald-200/60 rounded-xl p-2">
+                  <div class="text-[10px] text-emerald-700 font-semibold uppercase flex items-center gap-1">
+                    <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> Uang Masuk
+                  </div>
+                  <div class="font-bold text-emerald-900 text-[11px] mt-0.5">${t.paymentDateDisplay || t.dateDisplay}</div>
+                </div>
               </div>
 
               ${(t.stockCookies > 0 || t.stockCheesecake > 0) ? `
@@ -1279,7 +1314,17 @@
       const dd = String(today.getDate()).padStart(2, '0');
       const iso = `${yyyy}-${mm}-${dd}`;
       document.getElementById('inputDate').value = iso;
-      document.getElementById('dateDisplayPreview').innerText = 'Format: ' + formatDateDisplay(iso);
+      document.getElementById('dateDisplayPreview').innerText = formatDateDisplay(iso);
+    }
+
+    function setTodayPaymentDate() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const iso = `${yyyy}-${mm}-${dd}`;
+      document.getElementById('inputPaymentDate').value = iso;
+      document.getElementById('paymentDateDisplayPreview').innerText = formatDateDisplay(iso);
     }
 
     function openInputModal(targetOutlet = null) {
@@ -1291,6 +1336,7 @@
       populateOutletRadios(targetOutlet || appState.outlets[0]);
       setTodayDate();
 
+      setTodayPaymentDate();
       document.getElementById('inputStockCookies').value = '';
       document.getElementById('inputStockCheesecake').value = '';
       document.getElementById('inputCookies').value = '';
@@ -1320,7 +1366,11 @@
       populateOutletRadios(tx.outlet);
 
       document.getElementById('inputDate').value = tx.date || '';
-      document.getElementById('dateDisplayPreview').innerText = 'Format: ' + tx.dateDisplay;
+      document.getElementById('dateDisplayPreview').innerText = tx.dateDisplay || '';
+
+      const payDate = tx.paymentDate || tx.date || '';
+      document.getElementById('inputPaymentDate').value = payDate;
+      document.getElementById('paymentDateDisplayPreview').innerText = formatDateDisplay(payDate);
 
       document.getElementById('inputStockCookies').value = tx.stockCookies || '';
       document.getElementById('inputStockCheesecake').value = tx.stockCheesecake || '';
@@ -1346,6 +1396,7 @@
       const outletRadio = document.querySelector('input[name="inputOutlet"]:checked');
       const outlet = outletRadio ? outletRadio.value : appState.outlets[0];
       const dateVal = document.getElementById('inputDate').value;
+      const paymentDateVal = document.getElementById('inputPaymentDate').value || dateVal;
       const cookiesVal = parseRupiah(document.getElementById('inputCookies').value);
       const cheesecakeVal = parseRupiah(document.getElementById('inputCheesecake').value);
       const totalVal = cookiesVal + cheesecakeVal;
@@ -1357,6 +1408,7 @@
       const notesVal = document.getElementById('inputNotes').value.trim();
 
       const dateDisplay = formatDateDisplay(dateVal);
+      const paymentDateDisplay = formatDateDisplay(paymentDateVal);
 
       if (editId) {
         // Edit existing
@@ -1367,6 +1419,8 @@
             outlet,
             date: dateVal,
             dateDisplay,
+            paymentDate: paymentDateVal,
+            paymentDateDisplay,
             stockCookies: stockCookiesVal,
             stockCheesecake: stockCheesecakeVal,
             cookies: cookiesVal,
@@ -1384,6 +1438,8 @@
           outlet,
           date: dateVal,
           dateDisplay,
+          paymentDate: paymentDateVal,
+          paymentDateDisplay,
           stockCookies: stockCookiesVal,
           stockCheesecake: stockCheesecakeVal,
           cookies: cookiesVal,
@@ -1455,10 +1511,10 @@
       const headerRow2 = [];
 
       appState.outlets.forEach((out, i) => {
-        headerRow1.push(out, '', '', '', '', '', '');
+        headerRow1.push(out, '', '', '', '', '', '', '');
         if (i < appState.outlets.length - 1) headerRow1.push(''); // spacer
 
-        headerRow2.push('Date', 'Kirim 🍪 (pcs)', 'Kirim 🍰 (pcs)', 'Cookies (Rp)', 'Cheesecake (Rp)', 'Total (Rp)', 'Pay');
+        headerRow2.push('Tgl Kirim', 'Kirim 🍪 (pcs)', 'Kirim 🍰 (pcs)', 'Cookies (Rp)', 'Cheesecake (Rp)', 'Total (Rp)', 'Tgl Masuk Uang', 'Pay');
         if (i < appState.outlets.length - 1) headerRow2.push(''); // spacer
       });
 
@@ -1477,10 +1533,11 @@
               t.cookies || 0,
               t.cheesecake || 0,
               t.total || 0,
+              t.paymentDateDisplay || t.dateDisplay,
               t.pay || 'Cash'
             );
           } else {
-            row.push('', '', '', '', '', '', '');
+            row.push('', '', '', '', '', '', '', '');
           }
           if (i < appState.outlets.length - 1) row.push('');
         });
@@ -1497,7 +1554,7 @@
         const kTotal = outTx.reduce((s, x) => s + (x.cheesecake || 0), 0);
         const gTotal = outTx.reduce((s, x) => s + (x.total || 0), 0);
 
-        summaryRow.push('TOTAL', skTotal, scTotal, cTotal, kTotal, gTotal, '');
+        summaryRow.push('TOTAL', skTotal, scTotal, cTotal, kTotal, gTotal, '', '');
         if (i < appState.outlets.length - 1) summaryRow.push('');
       });
       sheetData.push(summaryRow);
@@ -1508,8 +1565,8 @@
       ws['!merges'] = [];
       let colIdx = 0;
       appState.outlets.forEach((out, i) => {
-        ws['!merges'].push({ s: { r: 0, c: colIdx }, e: { r: 0, c: colIdx + 6 } });
-        colIdx += 8;
+        ws['!merges'].push({ s: { r: 0, c: colIdx }, e: { r: 0, c: colIdx + 7 } });
+        colIdx += 9;
       });
 
       XLSX.utils.book_append_sheet(wb, ws, "Rekap Penjualan");
