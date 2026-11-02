@@ -348,10 +348,13 @@
             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
               <i class="fa-solid fa-truck text-teal-600"></i> Tgl Kirim Stok
             </label>
-            <input type="date" id="inputDate" required class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 text-xs font-semibold text-slate-800 transition">
+            <input type="date" id="inputDate" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 text-xs font-semibold text-slate-800 transition">
             <div class="text-[10px] text-slate-500 mt-1 flex items-center justify-between">
-              <span id="dateDisplayPreview">-</span>
-              <button type="button" onclick="setTodayDate()" class="text-brand-600 font-semibold hover:underline">Hari Ini</button>
+              <span id="dateDisplayPreview" class="truncate max-w-[120px]">-</span>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="setTodayDate()" class="text-brand-600 font-semibold hover:underline">Hari Ini</button>
+                <button type="button" onclick="clearDate()" class="text-red-500 font-semibold hover:underline">Kosongkan</button>
+              </div>
             </div>
           </div>
 
@@ -362,8 +365,11 @@
             </label>
             <input type="date" id="inputPaymentDate" class="w-full px-3 py-2 rounded-xl border border-emerald-300 focus:ring-2 focus:ring-emerald-500 bg-emerald-50/40 text-xs font-semibold text-slate-800 transition">
             <div class="text-[10px] text-slate-500 mt-1 flex items-center justify-between">
-              <span id="paymentDateDisplayPreview">-</span>
-              <button type="button" onclick="setTodayPaymentDate()" class="text-emerald-700 font-semibold hover:underline">Hari Ini</button>
+              <span id="paymentDateDisplayPreview" class="truncate max-w-[120px] text-slate-400">Belum diterima</span>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="setTodayPaymentDate()" class="text-emerald-700 font-semibold hover:underline">Hari Ini</button>
+                <button type="button" onclick="clearPaymentDate()" class="text-red-500 font-semibold hover:underline">Kosongkan</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1113,7 +1119,7 @@
           tableHtml += `
             <tr onclick="editTransaction('${t.id}')" class="hover:bg-blue-50 cursor-pointer transition group">
               <td class="px-2 py-1.5 border-r border-slate-900 text-center whitespace-nowrap font-semibold text-slate-700 text-[11px] sm:text-xs">
-                ${t.dateDisplay}
+                ${t.dateDisplay || '<span class="text-slate-400 font-normal">-</span>'}
               </td>
               <td class="px-1.5 py-1.5 border-r border-slate-900 text-center font-bold text-teal-700 bg-teal-50/40 text-[11px] sm:text-xs whitespace-nowrap">
                 ${t.stockCookies > 0 ? t.stockCookies + ' pcs' : '-'}
@@ -1130,8 +1136,8 @@
               <td class="px-2 py-1.5 border-r border-slate-900 text-right font-black text-slate-900 text-[11px] sm:text-xs whitespace-nowrap">
                 ${formatRupiah(t.total)}
               </td>
-              <td class="px-2 py-1.5 border-r border-slate-900 text-center whitespace-nowrap font-bold text-emerald-800 bg-emerald-50/50 text-[11px] sm:text-xs">
-                ${t.paymentDateDisplay || t.dateDisplay}
+              <td class="px-2 py-1.5 border-r border-slate-900 text-center whitespace-nowrap text-[11px] sm:text-xs ${t.paymentDateDisplay ? 'font-bold text-emerald-800 bg-emerald-50/60' : 'text-slate-400 bg-slate-50/50'}">
+                ${t.paymentDateDisplay ? t.paymentDateDisplay : '<span class="text-[10px] text-amber-700 bg-amber-100/80 px-1.5 py-0.5 rounded font-semibold">Belum Masuk</span>'}
               </td>
               <td class="px-1.5 py-1.5 text-center ${payBadgeClass} text-[11px] sm:text-xs whitespace-nowrap">
                 ${t.pay}
@@ -1241,11 +1247,11 @@
                   </div>
                   <div class="font-bold text-slate-700 text-[11px] mt-0.5">${t.dateDisplay}</div>
                 </div>
-                <div class="bg-emerald-50/60 border border-emerald-200/60 rounded-xl p-2">
-                  <div class="text-[10px] text-emerald-700 font-semibold uppercase flex items-center gap-1">
-                    <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> Uang Masuk
+                <div class="${t.paymentDateDisplay ? 'bg-emerald-50/60 border-emerald-200/60' : 'bg-amber-50/60 border-amber-200/60'} border rounded-xl p-2">
+                  <div class="text-[10px] ${t.paymentDateDisplay ? 'text-emerald-700' : 'text-amber-800'} font-semibold uppercase flex items-center gap-1">
+                    <i class="fa-solid fa-hand-holding-dollar ${t.paymentDateDisplay ? 'text-emerald-600' : 'text-amber-600'}"></i> Uang Masuk
                   </div>
-                  <div class="font-bold text-emerald-900 text-[11px] mt-0.5">${t.paymentDateDisplay || t.dateDisplay}</div>
+                  <div class="font-bold ${t.paymentDateDisplay ? 'text-emerald-900' : 'text-amber-700'} text-[11px] mt-0.5">${t.paymentDateDisplay || 'Belum Diterima'}</div>
                 </div>
               </div>
 
@@ -1317,6 +1323,11 @@
       document.getElementById('dateDisplayPreview').innerText = formatDateDisplay(iso);
     }
 
+    function clearDate() {
+      document.getElementById('inputDate').value = '';
+      document.getElementById('dateDisplayPreview').innerText = '(Kosong)';
+    }
+
     function setTodayPaymentDate() {
       const today = new Date();
       const yyyy = today.getFullYear();
@@ -1325,6 +1336,11 @@
       const iso = `${yyyy}-${mm}-${dd}`;
       document.getElementById('inputPaymentDate').value = iso;
       document.getElementById('paymentDateDisplayPreview').innerText = formatDateDisplay(iso);
+    }
+
+    function clearPaymentDate() {
+      document.getElementById('inputPaymentDate').value = '';
+      document.getElementById('paymentDateDisplayPreview').innerText = '(Kosong)';
     }
 
     function openInputModal(targetOutlet = null) {
@@ -1336,7 +1352,7 @@
       populateOutletRadios(targetOutlet || appState.outlets[0]);
       setTodayDate();
 
-      setTodayPaymentDate();
+      clearPaymentDate();
       document.getElementById('inputStockCookies').value = '';
       document.getElementById('inputStockCheesecake').value = '';
       document.getElementById('inputCookies').value = '';
@@ -1368,9 +1384,9 @@
       document.getElementById('inputDate').value = tx.date || '';
       document.getElementById('dateDisplayPreview').innerText = tx.dateDisplay || '';
 
-      const payDate = tx.paymentDate || tx.date || '';
+      const payDate = tx.paymentDate || '';
       document.getElementById('inputPaymentDate').value = payDate;
-      document.getElementById('paymentDateDisplayPreview').innerText = formatDateDisplay(payDate);
+      document.getElementById('paymentDateDisplayPreview').innerText = payDate ? formatDateDisplay(payDate) : '(Kosong)';
 
       document.getElementById('inputStockCookies').value = tx.stockCookies || '';
       document.getElementById('inputStockCheesecake').value = tx.stockCheesecake || '';
@@ -1395,8 +1411,8 @@
       const editId = document.getElementById('editTxId').value;
       const outletRadio = document.querySelector('input[name="inputOutlet"]:checked');
       const outlet = outletRadio ? outletRadio.value : appState.outlets[0];
-      const dateVal = document.getElementById('inputDate').value;
-      const paymentDateVal = document.getElementById('inputPaymentDate').value || dateVal;
+      const dateVal = document.getElementById('inputDate').value || '';
+      const paymentDateVal = document.getElementById('inputPaymentDate').value || '';
       const cookiesVal = parseRupiah(document.getElementById('inputCookies').value);
       const cheesecakeVal = parseRupiah(document.getElementById('inputCheesecake').value);
       const totalVal = cookiesVal + cheesecakeVal;
@@ -1533,7 +1549,7 @@
               t.cookies || 0,
               t.cheesecake || 0,
               t.total || 0,
-              t.paymentDateDisplay || t.dateDisplay,
+              t.paymentDateDisplay || '-',
               t.pay || 'Cash'
             );
           } else {
